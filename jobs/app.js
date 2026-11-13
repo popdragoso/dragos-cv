@@ -13,9 +13,9 @@
   const S = {
     data: null, jobs: [], profile: null,
     weights: store.get('weights', Object.assign({}, JR.DEFAULT_WEIGHTS)),
-    f: Object.assign({ q: '', sort: 'overall', modes: [], days: 0, minFit: 0, pay: false, hideBlocked: true, source: '', show: 'open', all: false }, store.get('filters', {})),
+    f: Object.assign({ q: '', sort: 'overall', modes: [], days: 0, minFit: 0, pay: false, known: false, hideBlocked: true, source: '', show: 'open', all: false }, store.get('filters', {})),
     marks: store.get('marks', {}), // id -> 'saved' | 'hidden' | 'applied'
-    showWeights: false, sheet: null, limit: 40,
+    showWeights: false, sheet: null, limit: 40, net: { connections: [], contacts: [] },
   };
   S.f.q = '';
 
@@ -27,6 +27,15 @@
     } else S.profile = JR.defaultProfile();
     S.profile.salaryFloor = store.get('floor', null);
   }
+
+  /* ---------- your network: connections file (kept in this browser) + anything the private build ships ---------- */
+  function loadNetwork() {
+    const baked = ENV.network || {};
+    const local = store.get('conns', null);
+    const rows = local && local.length ? local.map((r) => ({ name: r[0], url: r[1], company: r[2], position: r[3], since: r[4] })) : baked.connections || [];
+    S.net = { connections: rows, contacts: baked.contacts || [], local: !!(local && local.length) };
+  }
+  function who() { S.anyWho = false; for (const j of S.jobs) { j.who = JR.network(j, S.net); if (j.who.length) S.anyWho = true; } }
 
   /* ---------- scoring ---------- */
   function key(j) { return JR.norm(j.company).replace(/[^a-z0-9]/g, '') + '|' + JR.norm(j.title).replace(/\(.*?\)|\[.*?\]/g, '').replace(/[^a-z0-9]/g, ''); }
@@ -54,6 +63,7 @@
       j.s = JR.score(j, S.profile, { now });
       j.o = JR.overall(j.s.sub, S.weights);
     }
+    who();
     badges();
   }
   function relevant(j) { return j.e.eligible && j.e.family !== 'other'; }
@@ -108,6 +118,7 @@
       if (f.days && (j.s.days == null || j.s.days > f.days)) return false;
       if (j.s.fit < f.minFit) return false;
       if (f.pay && !j.e.salary) return false;
+      if (f.known && S.anyWho && !j.who.length) return false;
       if (f.source && !j.sourcesAll.includes(f.source)) return false;
       if (q && !JR.norm(j.title + ' ' + j.company + ' ' + j.location + ' ' + (j.description || '')).includes(q)) return false;
       return true;
@@ -155,6 +166,7 @@
     <section class="picks n${S.picks.length}" aria-label="Top picks">
       ${S.picks.map(([name, j, val, hint]) => `<button class="pick" data-open="${h(j.id)}" title="${h(hint)}"><span class="label">${h(name)}</span><span class="v num">${h(val(j))}</span><span class="t">${h(j.title)}</span><span class="small muted">${h(j.company)}</span></button>`).join('')}
     </section>
+    ${!S.net.connections.length && !store.get('hideConnTip', false) ? `<div class="note tip"><span>See the real people you know at each of these companies: add your LinkedIn connections file once.</span> <button class="btn small" data-act="profile">Add connections</button> <button class="btn quiet small" data-act="hidetip">Not now</button></div>` : ''}
     <section class="controls">
       <div class="row">
         <input class="field" type="search" id="q" placeholder="Search title, company or keyword" value="${h(S.f.q)}" aria-label="Search">
@@ -170,6 +182,7 @@
         <select class="field" id="minfit" aria-label="Minimum fit">${[0, 40, 50, 60, 70, 80].map((v) => `<option value="${v}" ${S.f.minFit == v ? 'selected' : ''}>${v ? 'Fit ' + v + '%+' : 'Any fit'}</option>`).join('')}</select>
         <select class="field" id="source" aria-label="Source"><option value="">All sources</option>${sources.map((s) => `<option ${S.f.source === s ? 'selected' : ''}>${h(s)}</option>`).join('')}</select>
         <button class="btn" data-tog="pay" aria-pressed="${S.f.pay}">Pay disclosed</button>
+        ${S.anyWho ? `<button class="btn" data-tog="known" aria-pressed="${!!S.f.known}" title="Only roles at companies where you know someone">I know someone there</button>` : ''}
         <button class="btn" data-tog="hideBlocked" aria-pressed="${S.f.hideBlocked}">Hide language blockers</button>
         <button class="btn" data-tog="all" aria-pressed="${S.f.all}" title="Also show roles outside Spain and non-product titles">Show everything</button>
       </div>
@@ -206,6 +219,7 @@
         <div class="chips">
           <span class="chip ${e.workMode}">${h(modeLabel(e))}</span>
           <span class="chip ${e.salary ? 'pay' : ''} num">${h(payText(e.salary, true))}</span>
+          ${j.who.length ? `<span class="chip know">${h(knowText(j.who))}</span>` : ''}
           ${s.knockouts.filter((k) => k.severity !== 'info').map((k) => `<span class="chip ${k.severity === 'hard' ? 'bad' : ''}">${h(k.text)}</span>`).join('')}
           ${e.flex.map((x) => `<span class="chip">${h(x.label)}</span>`).join('')}
           ${ben.map((b) => `<span class="chip">${h(b.label)}</span>`).join('')}${e.benefits.length > ben.length ? `<span class="chip">+${e.benefits.length - ben.length} more</span>` : ''}
@@ -214,7 +228,7 @@
         <div class="acts">
           <a class="btn" href="${h(j.url)}" target="_blank" rel="noopener noreferrer">Open posting</a>
           <button class="btn primary" data-tailor="${h(j.id)}">Tailor my CV</button>
-          <button class="btn" data-people="${h(j.id)}">Who to reach</button>
+          ${j.who.length ? `<button class="btn" data-people="${h(j.id)}">Who to reach (${j.who.length})</button>` : ''}
           <button class="btn quiet" data-mark="saved" data-id="${h(j.id)}" aria-pressed="${mark === 'saved'}">${mark === 'saved' ? 'Saved' : 'Save'}</button>
           <button class="btn quiet" data-mark="applied" data-id="${h(j.id)}" aria-pressed="${mark === 'applied'}">${mark === 'applied' ? 'Applied' : 'Mark applied'}</button>
           <button class="btn quiet" data-mark="hidden" data-id="${h(j.id)}" aria-pressed="${mark === 'hidden'}">${mark === 'hidden' ? 'Hidden' : 'Hide'}</button>
@@ -267,25 +281,33 @@
     <section><h2>Posting text</h2><div class="card"><div class="desc">${e.hasDescription ? h(j.description) : 'This source gave only a short summary. Open the posting for the full text; fit is estimated from the title.'}</div></div></section>`;
   }
 
+  function knowText(w) {
+    const best = w.find((x) => x.kind !== 'poster') || w[0];
+    const n = w.length;
+    if (best.kind === 'contact') return 'Your contact: ' + best.name + (n > 1 ? ' +' + (n - 1) : '');
+    if (best.kind === 'poster') return 'Poster named' + (n > 1 ? ' +' + (n - 1) : '');
+    const what = { manager: 'a likely hiring manager', decision: 'a decision maker', peer: 'a product peer', recruiter: 'a recruiter' }[best.tier];
+    return what ? 'You know ' + what + (n > 1 ? ' +' + (n - 1) : '') : 'You know ' + n + (n > 1 ? ' people' : ' person') + ' there';
+  }
+
+  // Real people only. No one to show means the section says so in one line and offers the searches, nothing more.
   function peopleBlock(j) {
+    const w = j.who, sh = S.sheet;
     const p = JR.people(j, S.profile);
-    const sh = S.sheet;
-    const verdict = sh.who ? JR.classifyPerson(sh.who, j.e.level) : null;
-    const tone = { manager: 'ok', decision: 'ok', peer: 'ok', recruiter: 'warn', other: 'warn', unknown: 'warn' };
-    return `<section id="people"><h2>Who to reach at ${h(p.company || 'this company')}</h2>
-      <p class="small muted">${p.scoped ? 'Each link opens that group inside ' + h(p.company) + ' on LinkedIn.' : 'This role came from the employer\'s own careers feed, so the links search all of LinkedIn for the company name.'} You need to be logged in to LinkedIn; it then shows the actual people and how you are connected to them. Nothing is sent for you.</p>
-      ${p.tiers.map((t, i) => `<div class="card tier">
-        <div class="tierhead"><span class="step num">${i + 1}</span><h3>${h(t.label)}</h3>${t.start ? '<span class="chip badge">Start here</span>' : ''}</div>
-        <p class="small">${h(t.why)}</p>
-        ${t.person ? `<div class="person"><a href="${h(t.person.url)}" target="_blank" rel="noopener noreferrer"><b>${h(t.person.name)}</b></a>${t.person.role ? ' · ' + h(t.person.role) : ''}${t.person.cls ? ` <span class="chip">${h(t.person.cls)}</span>` : ''}</div>` : ''}
-        ${t.links.length ? `<div class="chips">${t.links.map((l) => `<a class="btn small" href="${h(l.url)}" target="_blank" rel="noopener noreferrer">${h(l.label)}</a>`).join('')}</div>` : ''}
-        <p class="small muted"><b>How to open:</b> ${h(t.ask)}</p>
-      </div>`).join('')}
-      <div class="card">
-        <h3>Found someone? Check where they sit</h3>
-        <div class="row"><input class="field" id="who" style="flex:1 1 240px" placeholder="Paste their job title, e.g. Director of Product, Growth" value="${h(sh.who || '')}" aria-label="Job title to classify"><button class="btn" data-act="classify">Classify</button></div>
-        ${verdict ? `<div class="note ${tone[verdict.tier]}">For this ${h(j.e.seniority)}-level role: <b>${h(verdict.label)}</b>.${verdict.tier === 'peer' ? ' Check they have been at the company one to two years before asking for a referral.' : verdict.tier === 'recruiter' ? ' Good for process and timing, not for a referral.' : verdict.tier === 'other' ? ' Unlikely to influence this hire; useful only if you know them.' : ''}</div>` : ''}
-      </div></section>`;
+    const tier = (k) => (p.tiers.find((t) => t.key === k) || { links: [] }).links;
+    const quick = [tier('manager')[0], tier('manager')[1], tier('decision')[0], tier('peer')[0], tier('warm')[0], tier('recruiter')[0]].filter(Boolean);
+    const tone = { manager: 'have', decision: 'have', peer: 'have', recruiter: '', other: '', unknown: '' };
+    const shown = sh.allPeople ? w : w.slice(0, 8);
+    const loaded = S.net.connections.length;
+    return `<section id="people"><h2>${w.length ? 'People to reach at ' + h(j.company) : loaded ? 'None of your connections is at ' + h(j.company) : 'Find people at ' + h(j.company)}</h2>
+      ${w.length ? `<div class="card people">${shown.map((x) => `<div class="prow">
+          <div class="pmain">${x.url ? `<a href="${h(x.url)}" target="_blank" rel="noopener noreferrer"><b>${h(x.name)}</b></a>` : `<b>${h(x.name)}</b>`}${x.position ? `<span class="muted"> · ${h(x.position)}</span>` : ''}</div>
+          <div class="chips"><span class="chip ${tone[x.tier] || ''}">${h(x.label)}</span>${x.kind === 'contact' ? '<span class="chip badge">In your tracker</span>' : x.kind === 'poster' ? '<span class="chip">Named on the posting</span>' : '<span class="chip">1st-degree connection</span>'}</div>
+          ${x.note ? `<div class="small muted">${h(x.note)}</div>` : ''}
+        </div>`).join('')}
+        ${w.length > shown.length ? `<button class="btn quiet" data-act="allpeople">Show all ${w.length}</button>` : ''}</div>` : ''}
+      <div class="row small"><span class="muted">${w.length ? 'Find others on LinkedIn:' : 'Search LinkedIn:'}</span>${quick.map((l) => `<a class="btn small" href="${h(l.url)}" target="_blank" rel="noopener noreferrer">${h(l.label)}</a>`).join('')}</div>
+    </section>`;
   }
 
   function tailorBlock(j, t) {
@@ -331,6 +353,11 @@
       <div class="row"><input type="file" id="cvfile" accept=".pdf,.txt,.md" class="field" aria-label="CV or LinkedIn PDF"></div>
       <textarea class="field" id="cvtext" placeholder="Or paste the CV or LinkedIn profile text here">${h(sh.text || '')}</textarea>
       <div class="row"><button class="btn primary" data-act="usetext">Use this CV</button>${p.custom ? '<button class="btn" data-act="resetprofile">Back to the built-in profile</button>' : ''}</div>
+    </div></section>
+    <section><h2>Your LinkedIn connections</h2><div class="card">
+      ${S.net.connections.length ? `<div class="note ok"><b>${S.net.connections.length.toLocaleString('en-GB')}</b> connections loaded${S.net.local ? ' in this browser' : ''}. You know someone at <b>${new Set(S.jobs.filter((j) => relevant(j) && j.who.some((x) => x.kind === 'connection')).map((j) => j.company)).size}</b> of the companies hiring right now.</div>` : ''}
+      <p class="small muted">LinkedIn gives every member a file of their own connections with each person's current company and job title. With it, every role shows the real people you know there, sorted by hiring manager, decision maker, peer and recruiter. To get it: on LinkedIn open <b>Settings → Data privacy → Get a copy of your data</b>, tick <b>Connections</b> only, request it, and LinkedIn emails a link within about ten minutes. Drop <b>Connections.csv</b> here. It is read in this browser and goes nowhere else.</p>
+      <div class="row"><input type="file" id="connfile" accept=".csv" class="field" aria-label="LinkedIn Connections.csv">${S.net.local ? '<button class="btn" data-act="dropconns">Remove from this browser</button>' : ''}</div>
     </div></section>
     <section><h2>Pay floor (optional)</h2><div class="card"><div class="row"><input class="field num" id="floor" type="number" min="0" step="5000" placeholder="e.g. 90000" value="${p.salaryFloor || ''}" aria-label="Pay floor in euros per year"><button class="btn" data-act="floor">Save</button></div><p class="small muted">Euros per year, gross. Kept in this browser only. Postings that disclose pay are then marked as reaching it or not.</p></div></section>`;
   }
@@ -435,7 +462,7 @@
       case 'weights': S.showWeights = !S.showWeights; return render();
       case 'resetw': S.weights = Object.assign({}, JR.DEFAULT_WEIGHTS); store.set('weights', S.weights); rescore(); return render();
       case 'more': S.limit += 40; return render();
-      case 'clear': S.f = Object.assign(S.f, { q: '', modes: [], days: 0, minFit: 0, pay: false, source: '', show: 'open' }); return render();
+      case 'clear': S.f = Object.assign(S.f, { q: '', modes: [], days: 0, minFit: 0, pay: false, known: false, source: '', show: 'open' }); return render();
       case 'toggletailor': S.sheet.tailor = !S.sheet.tailor; S.sheet.polished = null; S.sheet.guard = null; return renderSheet();
       case 'copycv': {
         const text = $('#cvout').textContent;
@@ -443,7 +470,9 @@
         return;
       }
       case 'dlcv': { const tl = JR.tailor(cur, S.profile); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([tl.markdown], { type: 'text/markdown' })); a.download = 'CV - ' + cur.company.replace(/[^\w -]/g, '') + '.md'; a.click(); return; }
-      case 'classify': S.sheet.who = $('#who').value.trim(); return renderSheet();
+      case 'hidetip': store.set('hideConnTip', true); return render();
+      case 'allpeople': S.sheet.allPeople = true; return renderSheet();
+      case 'dropconns': store.set('conns', null); loadNetwork(); who(); S.sheet = { type: 'profile', msg: 'Connections removed from this browser.', msgKind: 'ok' }; return render();
       case 'polish': return polish(cur);
       case 'unpolish': S.sheet.polished = null; S.sheet.guard = null; return renderSheet();
       case 'savedrive': return saveDrive(cur);
@@ -469,6 +498,19 @@
     else if (t.id === 'minfit') { S.f.minFit = Number(t.value); render(); }
     else if (t.id === 'source') { S.f.source = t.value; render(); }
     else if (t.dataset.w) { S.weights[t.dataset.w] = Number(t.value); store.set('weights', S.weights); rescore(); render(); }
+    else if (t.id === 'connfile' && t.files[0]) {
+      try {
+        const rows = JR.parseConnections(await t.files[0].text());
+        if (!rows.length) return say('That file has no connections in it. It should be the Connections.csv from LinkedIn\'s data export, with columns First Name, Last Name, URL, Company, Position.', 'warn');
+        store.set('conns', rows.map((r) => [r.name, r.url, r.company, r.position, r.since]));
+        loadNetwork();
+        if (!S.net.local) S.net = { connections: rows, contacts: S.net.contacts, local: false }; // storage full or blocked: keep them for this visit
+        who();
+        const n = new Set(S.jobs.filter((j) => relevant(j) && j.who.some((x) => x.kind === 'connection')).map((j) => j.company)).size;
+        S.sheet = { type: 'profile', msg: rows.length.toLocaleString('en-GB') + ' connections read. You know someone at ' + n + ' of the companies hiring right now. Use "I know someone there" on the list to see them.', msgKind: 'ok' };
+        render();
+      } catch (e) { say('Could not read that file (' + errText(e) + ').', 'bad'); }
+    }
     else if (t.id === 'cvfile' && t.files[0]) {
       const f = t.files[0];
       const li = ($('#liurl').value || '').trim();
@@ -488,12 +530,12 @@
   });
   document.addEventListener('keydown', (ev) => {
     if (ev.key === 'Escape' && S.sheet) { S.sheet = null; renderSheet(); }
-    if (ev.key === 'Enter' && ev.target.id === 'who') { S.sheet.who = ev.target.value.trim(); renderSheet(); }
   });
 
   /* ---------- boot ---------- */
   async function boot() {
     loadProfile();
+    loadNetwork();
     if (window.JR_DATA) S.data = window.JR_DATA;
     else {
       try { const r = await fetch('data/jobs.json', { cache: 'no-cache' }); if (r.ok) S.data = await r.json(); } catch (e) { /* first run: no data yet */ }

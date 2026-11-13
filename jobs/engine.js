@@ -328,7 +328,7 @@
     const isPM = /product (manager|management|lead|owner|director)|head of product|\bpm\b|chief product|vp,? (of )?product|product growth|growth product|group product|responsable de producto/.test(title);
     const isCRO = /\bcro\b|conversion rate|conversion optimi|experimentation|(website|ux|digital|web) optimi[sz]ation|a\/b test/.test(title);
     const isGrowth = /growth/.test(title);
-    const off = /data director|director of (growth|marketing|data)|product marketing|marketing manager|project manager|program manager|programme manager|product design|designer|engineer|developer|analyst|data scientist|sales|account (manager|executive)|customer success|recruiter|production manager|product specialist|product operations|category manager|brand manager|content manager|community manager|supply chain|quality manager|compliance|legal|finance manager/.test(title);
+    const off = /video editor|\beditor\b|digital pr\b|\bpr manager|paid media|media buyer|data director|director of (growth|marketing|data)|product marketing|marketing manager|project manager|program manager|programme manager|product design|designer|engineer|developer|analyst|data scientist|sales|account (manager|executive)|customer success|recruiter|production manager|product specialist|product operations|category manager|brand manager|content manager|community manager|supply chain|quality manager|compliance|legal|finance manager/.test(title);
     e.family = off && !/product manager/.test(title.replace(/product marketing manager/, '')) ? 'other' : isPM ? (/owner/.test(title) ? 'owner' : 'pm') : isCRO ? 'cro' : isGrowth ? 'growth' : 'other';
     if (/technical product manager|platform product manager|data product manager|hardware/.test(title)) e.techPM = true;
     e.adjacent = e.family !== 'pm' && e.family !== 'owner' && /consultant|specialist|executive|analyst|affiliate|referral|operations|marketing|strategy|sales|partnerships?|community|hacker|seo|paid|crm/.test(title);
@@ -724,7 +724,7 @@
       peer = [['Senior PM', 'senior product manager'], ['Product Manager', 'product manager'], ['Lead PM', 'lead product manager']];
     }
     if (e.family === 'cro' || e.family === 'growth') manager.unshift(['Head of Growth', 'head of growth']);
-    const withArea = (pairs) => (area ? [[pairs[0][0] + ', ' + area, pairs[0][1] + ' ' + area]].concat(pairs) : pairs).map(([l, k]) => L(l, k));
+    const withArea = (pairs) => (area && !pairs[0][0].toLowerCase().includes(area.toLowerCase()) ? [[pairs[0][0] + ', ' + area, pairs[0][1] + ' ' + area]].concat(pairs) : pairs).map(([l, k]) => L(l, k));
 
     tiers.push({
       key: 'manager', label: 'Likely hiring manager', start: !tiers.length,
@@ -761,7 +761,95 @@
     return { company, scoped: !!slug, area, tiers };
   }
 
-  const api = { classifyPerson, people, LEXICON, LEX, norm, concepts, enrich, parseMoney, buildProfile, score, overall, tailor, factGuard, freshness, renderText, renderMarkdown, DEFAULT_WEIGHTS };
+  /* ---------- 7. Real people: the user's own network matched to each employer ----------
+     Sources: the Connections.csv file LinkedIn gives every member (their own 1st-degree connections), contacts the
+     user tracks, and the poster named on a posting. Nothing is looked up about anyone; the user already holds this data. */
+  const CO_STOP = new Set(['inc', 'llc', 'ltd', 'limited', 'sl', 'slu', 'sa', 'sas', 'gmbh', 'bv', 'ag', 'ab', 'plc', 'corp', 'corporation', 'co', 'company', 'group', 'grupo', 'holding', 'holdings', 'the', 'com', 'io', 'technologies', 'technology', 'tech', 'labs', 'lab', 'hq', 'global', 'international', 'spain', 'espana', 'iberia', 'europe', 'emea', 'barcelona', 'worldwide']);
+  function companyTokens(name) {
+    const raw = norm(name).replace(/\(.*?\)/g, ' ').replace(/\.(com|io|ai|co|app)\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+    const kept = raw.filter((t) => !CO_STOP.has(t));
+    return kept.length ? kept : raw;
+  }
+  function sameCompany(a, b) {
+    const x = typeof a === 'string' ? companyTokens(a) : a, y = typeof b === 'string' ? companyTokens(b) : b;
+    if (!x.length || !y.length) return false;
+    const [s, l] = x.length <= y.length ? [x, y] : [y, x];
+    for (let i = 0; i < s.length; i++) if (s[i] !== l[i]) return false;
+    // "Gartner" matches "Gartner Digital Markets"; a two-letter name like "G2" must match exactly, or it would catch "G2 Esports"
+    return s.length === l.length || s.join('').length >= 4;
+  }
+
+  /** Parse LinkedIn's Connections.csv (it starts with a few note lines before the header). */
+  function parseConnections(text) {
+    const rows = [];
+    let row = [], cell = '', q = false;
+    const t = String(text || '').replace(/^﻿/, '');
+    for (let i = 0; i < t.length; i++) {
+      const c = t[i];
+      if (q) { if (c === '"') { if (t[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+      else if (c === '"') q = true;
+      else if (c === ',') { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cell); cell = ''; if (row.length > 1 || row[0]) rows.push(row); row = []; }
+      else cell += c;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    const h = rows.findIndex((r) => r.some((c) => /^first name$/i.test(c.trim())) && r.some((c) => /^company$/i.test(c.trim())));
+    if (h < 0) return [];
+    const col = (re) => rows[h].findIndex((c) => re.test(c.trim()));
+    const ci = { f: col(/^first name$/i), l: col(/^last name$/i), u: col(/^url$/i), c: col(/^company$/i), p: col(/^position$/i), d: col(/^connected on$/i) };
+    const out = [];
+    for (const r of rows.slice(h + 1)) {
+      const name = ((r[ci.f] || '') + ' ' + (r[ci.l] || '')).trim(), company = (r[ci.c] || '').trim();
+      if (!name || !company) continue; // LinkedIn leaves these blank for members who hide them
+      const url = (r[ci.u] || '').trim();
+      out.push({ name, url: /^https:\/\/([a-z]+\.)?linkedin\.com\//.test(url) ? url : '', company, position: (r[ci.p] || '').trim(), since: ci.d >= 0 ? (r[ci.d] || '').trim() : '' });
+    }
+    return out;
+  }
+
+  function indexNetwork(net) {
+    if (net._idx) return net._idx;
+    const idx = new Map();
+    for (const c of net.connections || []) {
+      const tk = companyTokens(c.company);
+      if (!tk.length) continue;
+      c._tk = tk;
+      if (!idx.has(tk[0])) idx.set(tk[0], []);
+      idx.get(tk[0]).push(c);
+    }
+    Object.defineProperty(net, '_idx', { value: idx, enumerable: false });
+    return idx;
+  }
+
+  const TIER_ORDER = { manager: 0, decision: 1, peer: 2, recruiter: 3, other: 4, unknown: 5 };
+  /** The real people the user can write to about this role, best first. */
+  function network(job, net) {
+    const e = job.e || (job.e = enrich(job));
+    const out = [];
+    const jt = companyTokens(job.company);
+    if (!jt.length) return out;
+    if (job.poster) {
+      const c = job.poster.role ? classifyPerson(job.poster.role, e.level) : { tier: 'unknown', label: 'Role not shown' };
+      out.push({ kind: 'poster', name: job.poster.name, url: job.poster.url, position: job.poster.role || '', tier: c.tier, label: c.label, note: 'Posted this role on LinkedIn' });
+    }
+    for (const c of (net && net.contacts) || []) {
+      if (!sameCompany(jt, companyTokens(c.company))) continue;
+      const k = c.title ? classifyPerson(c.title, e.level) : { tier: 'other', label: 'Your contact' };
+      out.push({ kind: 'contact', name: c.name, url: c.url || '', position: c.title || '', tier: k.tier === 'unknown' ? 'other' : k.tier, label: c.title ? k.label : 'Your contact', note: [c.status, c.next ? 'Next: ' + c.next : ''].filter(Boolean).join('. ') });
+    }
+    if (net && net.connections && net.connections.length) {
+      for (const c of indexNetwork(net).get(jt[0]) || []) {
+        if (!sameCompany(jt, c._tk)) continue;
+        const k = classifyPerson(c.position, e.level);
+        out.push({ kind: 'connection', name: c.name, url: c.url, position: c.position, tier: k.tier, label: k.tier === 'other' || k.tier === 'unknown' ? 'Works there, can refer you internally' : k.label, rank: k.rank || 0, note: c.since ? 'Connected since ' + c.since : '' });
+      }
+    }
+    const kindOrder = { contact: 0, poster: 1, connection: 2 };
+    out.sort((a, b) => (a.kind === 'contact' ? -1 : 0) - (b.kind === 'contact' ? -1 : 0) || TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || (b.rank || 0) - (a.rank || 0) || kindOrder[a.kind] - kindOrder[b.kind] || a.name.localeCompare(b.name));
+    return out;
+  }
+
+  const api = { companyTokens, sameCompany, parseConnections, network, classifyPerson, people, LEXICON, LEX, norm, concepts, enrich, parseMoney, buildProfile, score, overall, tailor, factGuard, freshness, renderText, renderMarkdown, DEFAULT_WEIGHTS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.JR = Object.assign(root.JR || {}, api);
 })(typeof globalThis !== 'undefined' ? globalThis : this);

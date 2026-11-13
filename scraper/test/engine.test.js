@@ -51,4 +51,25 @@ const ppl2 = JR.people({ title: 'Principal Product Manager', company: 'Acme & Co
 assert.equal(ppl2.tiers[0].key, 'listed');
 assert.ok(ppl2.tiers[0].start && !ppl2.tiers[1].start && !ppl2.scoped);
 assert.ok(new URL(ppl2.tiers[1].links[0].url).searchParams.get('keywords').includes('"Acme & Co"'));
+// ---- real people: connections file, company matching ----
+assert.ok(JR.sameCompany('Preply', 'Preply Inc.'));
+assert.ok(JR.sameCompany('Gartner', 'Gartner Digital Markets'));
+assert.ok(JR.sameCompany('OLX Group', 'OLX'));
+assert.ok(JR.sameCompany('The Knot Worldwide', 'The Knot Worldwide Inc'));
+assert.ok(!JR.sameCompany('G2', 'G2 Esports'));
+assert.ok(JR.sameCompany('G2', 'G2.com'));
+assert.ok(!JR.sameCompany('Preply', 'Prezi'));
+assert.ok(!JR.sameCompany('Glovo', 'Globant'));
+assert.ok(!JR.sameCompany('Meta', 'Metabase'));
+const csv = 'Notes:\n"When exporting your connection data, you may notice that some of the email addresses are missing."\n\nFirst Name,Last Name,URL,Email Address,Company,Position,Connected On\nAna,Test,https://www.linkedin.com/in/ana-test,,"Acme & Co, Inc.",Director of Product,12 Mar 2023\nBob,"O""Neil",https://www.linkedin.com/in/bob,,Acme & Co,Senior Product Manager,01 Jan 2020\nCy,Hidden,,,,,05 May 2021\nDee,Rec,https://www.linkedin.com/in/dee,,Acme & Co,Talent Acquisition Partner,02 Feb 2022\nEd,Eng,https://www.linkedin.com/in/ed,,Acme & Co,Software Engineer,02 Feb 2022\nFay,Else,https://evil.example/in/fay,,Other Corp,VP Product,02 Feb 2022\n';
+const conns = JR.parseConnections(csv);
+assert.equal(conns.length, 5);
+assert.equal(conns[1].name, 'Bob O"Neil');
+assert.equal(conns[4].url, '', 'non-LinkedIn URLs are dropped');
+const netw = { connections: conns, contacts: [{ name: 'Gil', company: 'Acme and Co'.replace('and', '&'), status: 'CV sent', next: 'Follow up' }] };
+const who = JR.network({ title: 'Senior Product Manager - Growth', company: 'Acme & Co', location: 'Barcelona', description: '', url: 'https://example.com/j' }, netw);
+assert.deepEqual(who.map((x) => x.name), ['Gil', 'Ana Test', 'Bob O"Neil', 'Dee Rec', 'Ed Eng']);
+assert.deepEqual(who.map((x) => x.tier), ['other', 'manager', 'peer', 'recruiter', 'other']);
+assert.equal(JR.network({ title: 'PM', company: 'Nobody Known', location: '', description: '', url: 'x' }, netw).length, 0);
+assert.equal(JR.parseConnections('garbage,with,no,header').length, 0);
 console.log('people tests passed');
