@@ -1,20 +1,23 @@
-name: Job Radar refresh
+name: Job Radar scan
 
+# Collects product roles every morning and commits jobs/data/jobs.json, which the page at /jobs/ reads.
 on:
-  push:
-    branches: ['claude/barcelona-job-search-tool-8k211d']
-    paths: ['scraper/**', '.github/workflows/job-radar.yml']
+  schedule:
+    - cron: '17 5 * * *'   # 06:17 in winter, 07:17 in summer, Barcelona time
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['scraper/**', '.github/workflows/job-radar.yml']
 
 permissions:
   contents: write
 
 concurrency:
-  group: job-radar-${{ github.ref }}
-  cancel-in-progress: true
+  group: job-radar
+  cancel-in-progress: false
 
 jobs:
-  refresh:
+  scan:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -22,14 +25,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Probe sources
-        run: node scraper/probe.mjs
-      - name: Commit data
+      - name: Test the matching engine
+        run: node scraper/test/engine.test.js > /dev/null
+      - name: Scan sources
+        run: node scraper/run.mjs
+      - name: Publish results
         run: |
-          git config user.name "job-radar-bot"
+          git config user.name "job-radar"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A jobs/data
+          git add jobs/data/jobs.json scraper/companies.json 2>/dev/null || true
           git diff --cached --quiet && exit 0
-          git commit -m "Job Radar: data refresh $(date -u +%F)"
+          git commit -m "Job Radar: scan $(date -u +%F)"
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
