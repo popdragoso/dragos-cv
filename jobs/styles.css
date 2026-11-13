@@ -115,6 +115,11 @@ input[type="range"] { width: 100%; accent-color: var(--accent) }
 .cvout { white-space: pre-wrap; font: 13.5px/1.55 var(--font-body); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; overflow-wrap: anywhere; max-height: 520px; overflow-y: auto; user-select: text }
 .delta { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline }
 .delta .big { font-family: var(--font-display); font-size: 26px; font-weight: 600 }
+.tier { gap: 8px }
+.tierhead { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center }
+.step { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 600; font-size: 13px; flex: none }
+.btn.small { padding: 4px 10px; font-size: 13px }
+.person { font-size: 14.5px }
 ul.plain { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px }
 .note { font-size: 13px; color: var(--muted); background: var(--sunken); border-radius: 8px; padding: 10px 12px }
 .note.warn { background: var(--warn-soft); color: var(--warn) } .note.ok { background: var(--good-soft); color: var(--good) } .note.bad { background: var(--bad-soft); color: var(--bad) }

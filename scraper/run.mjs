@@ -33,7 +33,7 @@ const jobs = [];
 function report(id, name, status, count, note) { sources.push({ id, name, status, count, note: note || '' }); console.log(`[${status}] ${name}: ${count ?? ''} ${note || ''}`); }
 function add(source, j) {
   if (!j.title || !j.url || !titleOk(j.title) || !geoOk(j.location)) return false;
-  jobs.push({ id: source.toLowerCase().replace(/\W/g, '') + ':' + j.id, source, title: decode(j.title).trim(), company: decode(j.company || '').trim(), location: decode(j.location || '').trim(), url: j.url, postedAt: iso(j.postedAt), description: (j.description || '').slice(0, 7000), salaryText: j.salaryText || '', workMode: j.workMode || undefined });
+  jobs.push({ id: source.toLowerCase().replace(/\W/g, '') + ':' + j.id, source, title: decode(j.title).trim(), company: decode(j.company || '').trim(), location: decode(j.location || '').trim(), url: j.url, postedAt: iso(j.postedAt), description: (j.description || '').slice(0, 7000), salaryText: j.salaryText || '', workMode: j.workMode || undefined, liCompany: j.liCompany || undefined, posterListed: j.posterListed || undefined, poster: j.poster || undefined });
   return true;
 }
 async function source(id, name, fn) {
@@ -51,6 +51,28 @@ const failed = (r) => ({ status: [401, 403, 429, 451, 999].includes(r.status) ? 
 let prev = { jobs: [] };
 try { if (existsSync(OUT)) prev = JSON.parse(readFileSync(OUT, 'utf8')); } catch { /* first run */ }
 const prevById = new Map((prev.jobs || []).map((j) => [j.id, j]));
+
+/* What a public LinkedIn job page says about who is behind it: the company's page, and sometimes the person who posted it.
+   A poster's name is personal data, so it is written to the data file only when JR_PEOPLE=1 (a private run).
+   The public scan records just the fact that a poster is listed. */
+const KEEP_NAMES = process.env.JR_PEOPLE === '1';
+export function hiringInfo(html) {
+  const out = {};
+  const org = html.match(/topcard__org-name-link[^>]*href="https:\/\/[a-z.]*linkedin\.com\/company\/([^"?\/]+)/) || html.match(/href="https:\/\/[a-z.]*linkedin\.com\/company\/([^"?\/]+)/);
+  if (org) { try { out.liCompany = decodeURIComponent(org[1]); } catch { out.liCompany = org[1]; } }
+  const i = html.indexOf('class="message-the-recruiter"');
+  if (i >= 0) {
+    const blk = html.slice(i, i + 3000);
+    const name = text((blk.match(/base-main-card__title[^>]*>([\s\S]*?)<\/h3>/) || [])[1] || '');
+    const url = (blk.match(/href="(https:\/\/[a-z.]*linkedin\.com\/in\/[^"?]+)/) || [])[1];
+    const role = text((blk.match(/base-main-card__subtitle[^>]*>([\s\S]*?)<\/h4>/) || [])[1] || '');
+    if (name && url) {
+      out.posterListed = true;
+      if (KEEP_NAMES) out.poster = { name, url: decode(url), role };
+    }
+  }
+  return out;
+}
 
 /* ---------- LinkedIn (public, logged-out job pages) ---------- */
 async function linkedin() {
@@ -89,11 +111,16 @@ async function linkedin() {
   let fetched = 0;
   await pool(list, 3, async (j) => {
     const old = prevById.get('linkedin:' + j.id);
-    if (old && old.description && old.description.length > 400) { j.description = old.description; return; }
+    if (old && old.description && old.description.length > 400 && old.liCompany) {
+      j.description = old.description; j.liCompany = old.liCompany; j.posterListed = old.posterListed;
+      if (KEEP_NAMES) j.poster = old.poster;
+      if (!KEEP_NAMES || old.poster || !old.posterListed) return; // names wanted but not stored yet: read the page again
+    }
     const r = await get(`https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${j.id}`, {}, { retries: 2, backoff: 4000 });
     if (r.status === 200) {
       j.description = text((r.body.match(/show-more-less-html__markup[^>]*>([\s\S]*?)<\/div>/) || [])[1] || '');
       if (!j.salaryText) j.salaryText = text((r.body.match(/compensation__salary[^>]*>([\s\S]*?)<\/div>/) || [])[1] || '');
+      Object.assign(j, hiringInfo(r.body));
       fetched++;
     }
     await sleep(700 + Math.random() * 600);
@@ -194,16 +221,6 @@ const feeds = {
       await sleep(300);
     }
   },
-  async 'The Muse'() {
-    let ok = false;
-    for (const loc of ['Barcelona%2C%20Spain', 'Flexible%20%2F%20Remote']) for (let p = 0; p < 3; p++) {
-      const r = await getJSON(`https://www.themuse.com/api/public/jobs?category=Product%20Management&category=Product&location=${loc}&page=${p}`);
-      if (!r.json) { if (!ok) return failed(r); break; }
-      ok = true;
-      for (const j of r.json.results || []) add('The Muse', { id: j.id, title: j.name, company: j.company?.name, location: (j.locations || []).map((l) => l.name).join(' / '), url: j.refs?.landing_page, postedAt: j.publication_date, description: text(j.contents) });
-      if (p + 1 >= (r.json.page_count || 1)) break;
-    }
-  },
   async Jobicy() {
     const r = await getJSON('https://jobicy.com/api/v2/remote-jobs?count=50&tag=product%20manager');
     if (!r.json) return failed(r);
@@ -251,6 +268,10 @@ await knock('indeed', 'Indeed', 'https://es.indeed.com/jobs?q=senior+product+man
 await knock('glassdoor', 'Glassdoor', 'https://www.glassdoor.es/Empleo/barcelona-product-manager-empleos-SRCH_IL.0,9_IC2562177_KO10,25.htm', /JobCard|jobListing/);
 await knock('infojobs', 'InfoJobs', 'https://www.infojobs.net/jobsearch/search-results/list.xhtml?keyword=product+manager&provinceIds=9', /ij-OfferCard|offer-list/);
 
+const ck = (c) => JR.norm(c).replace(/[^a-z0-9]/g, '');
+const liByCompany = new Map(jobs.filter((j) => j.liCompany).map((j) => [ck(j.company), j.liCompany]));
+for (const j of jobs) if (!j.liCompany && liByCompany.has(ck(j.company))) j.liCompany = liByCompany.get(ck(j.company));
+
 // keep what a Barcelona-based candidate could take; stamp first-seen; drop stale
 const today = new Date(now).toISOString();
 const seen = new Set();
@@ -266,6 +287,16 @@ for (const j of jobs) {
   const age = (now - Date.parse(j.postedAt || j.firstSeen)) / 864e5;
   if (age > MAX_AGE_DAYS) continue;
   kept.push(j);
+}
+// show, per source, how many roles survived the filter (not how many titles were read)
+const keptBy = {};
+for (const j of kept) keptBy[j.source] = (keptBy[j.source] || 0) + 1;
+for (const s of sources) {
+  const src = Object.keys(keptBy).find((k) => s.name === k || s.name.startsWith(k + ' '));
+  if (s.status !== 'ok') continue;
+  const read = s.count;
+  s.count = src ? keptBy[src] : 0;
+  if (read !== s.count) s.note = [s.note, `${read} product titles read, ${s.count} workable from Barcelona`].filter(Boolean).join('; ');
 }
 const okSources = sources.filter((s) => s.status === 'ok').length;
 if (!kept.length && (prev.jobs || []).length) {

@@ -650,7 +650,118 @@
     return { ok: !issues.length, issues };
   }
 
-  const api = { LEXICON, LEX, norm, concepts, enrich, parseMoney, buildProfile, score, overall, tailor, factGuard, freshness, renderText, renderMarkdown, DEFAULT_WEIGHTS };
+  /* ---------- 6. Who to reach inside the company ----------
+     Nobody's profile is read. The tool classifies ROLES (who decides, who probably manages this hire, who is a peer)
+     and builds LinkedIn searches scoped to the employer; LinkedIn, with the user logged in, shows the actual people. */
+  const AREA = [['growth', 'growth'], ['experimentation', 'experimentation'], ['cro', 'conversion'], ['monetization', 'monetization'], ['genai', 'AI'], ['ai', 'AI'], ['ml', 'machine learning'], ['marketplace', 'marketplace'], ['payments', 'payments'], ['platform', 'platform'], ['mobile', 'mobile'], ['retention', 'retention'], ['crm', 'CRM'], ['acquisition', 'acquisition'], ['activation', 'activation'], ['personalization', 'personalization'], ['security', 'trust and safety'], ['adtech', 'advertising'], ['dataplatform', 'data'], ['devtools', 'platform'], ['ecommerce', 'e-commerce'], ['checkout', 'checkout']];
+
+  /** Classify a person's job title relative to a role at level `jobLevel` (see SENIORITY: senior 3, lead 3.5, principal/staff 4, group 5, director+ 6). */
+  function classifyPerson(title, jobLevel) {
+    const t = norm(title);
+    if (!t.trim()) return { tier: 'unknown', label: 'Role not shown', rank: 0 };
+    if (/recruit|talent|people (partner|ops|operations)|human resources|\bhr\b|sourcer|headhunt/.test(t)) return { tier: 'recruiter', label: 'Recruiter', rank: 0 };
+    if (/\b(ceo|founder|co-founder|cofounder|coo|managing director|general manager)\b/.test(t)) return { tier: 'decision', label: 'Decision maker', rank: 9 };
+    const adjacent = /design|marketing|engineer|developer|analyst|operations|\bops\b|sales|support|success|data scien|research|writer|content|legal|finance/.test(t);
+    const product = !adjacent && /product (manager|management|lead|owner|director|officer)|(head|director|vp|vice president|chief|lead|svp|evp) (of |, )?product|group product|\bcpo\b|\bpm\b|responsable de producto|product$/.test(t);
+    const growthLead = !product && /(head|director|vp|vice president|lead) (of |, )?(growth|experimentation|cro|conversion)/.test(t);
+    if (!product && !growthLead) return { tier: 'other', label: adjacent && /product/.test(t) ? 'Works next to product, not in it' : 'Outside product', rank: 0 };
+    // people managers sit on the hiring side; individual contributors are peers however senior
+    let lvl, manages = true;
+    if (/chief product|\bcpo\b/.test(t)) lvl = 8;
+    else if (/\b(svp|evp|senior vice president)\b/.test(t)) lvl = 7.5;
+    else if (/\b(vp|vice president)\b/.test(t)) lvl = 7;
+    else if (/senior director/.test(t)) lvl = 6.5;
+    else if (/head of|director/.test(t)) lvl = 6;
+    else if (/group product|product lead\b|lead of product/.test(t)) lvl = 5;
+    else { manages = false; lvl = /principal|staff/.test(t) ? 4 : /\blead\b/.test(t) ? 3.5 : /senior|\bsr\b/.test(t) ? 3 : /associate|junior|\bjr\b|intern/.test(t) ? 1 : 2; }
+    const jl = jobLevel == null ? 3 : jobLevel;
+    if (!manages) {
+      if (lvl < jl - 1.5) return { tier: 'other', label: 'More junior than the role', rank: lvl };
+      return { tier: 'peer', label: lvl > jl ? 'Senior peer who can refer you' : 'Peer who can refer you', rank: lvl };
+    }
+    if (lvl <= jl) return { tier: 'peer', label: 'Peer who can refer you', rank: lvl };
+    // the manager is the nearest managing level above the role; anything two or more steps beyond that decides rather than manages
+    const nearest = jl >= 6 ? 7 : jl >= 4 ? 6 : 5;
+    if (lvl <= nearest + 1.5) return { tier: 'manager', label: growthLead ? 'Possible hiring manager' : 'Likely hiring manager', rank: lvl };
+    return { tier: 'decision', label: 'Decision maker', rank: lvl };
+  }
+
+  function people(job, profile) {
+    const e = job.e || (job.e = enrich(job));
+    const company = String(job.company || '').trim();
+    const slug = job.liCompany || null;
+    const enc = encodeURIComponent;
+    // inside the company's own People tab when we know its LinkedIn page; otherwise a LinkedIn-wide search that names the company
+    const find = (kw) => (slug ? 'https://www.linkedin.com/company/' + enc(slug) + '/people/?keywords=' + enc(kw) : 'https://www.linkedin.com/search/results/people/?keywords=' + enc('"' + company + '" ' + kw) + '&origin=GLOBAL_SEARCH_HEADER');
+    const L = (label, kw) => ({ label, url: find(kw) });
+    const area = (AREA.find(([id]) => e.titleConcepts[id]) || [])[1] || null;
+    const lvl = e.level;
+    const tiers = [];
+
+    if (job.poster || job.posterListed) {
+      const c = job.poster && job.poster.role ? classifyPerson(job.poster.role, lvl) : null;
+      tiers.push({
+        key: 'listed', label: 'Named on the posting', start: true,
+        why: 'LinkedIn shows the person who posted this role. The public page gives no job title, so open the profile to see whether this is the hiring manager or a recruiter.',
+        ask: 'If they are in product, this is the most direct route: say you are applying and ask one specific question about the role. If they are a recruiter, ask about process and timing rather than a referral.',
+        person: job.poster ? { name: job.poster.name, url: job.poster.url, role: job.poster.role || '', cls: c ? c.label : '' } : null,
+        links: job.poster ? [] : [{ label: 'Open the posting to see who', url: job.url }],
+      });
+    }
+
+    let manager, decision, peer;
+    if (lvl >= 6) {
+      manager = [['VP Product', 'VP product'], ['Chief Product Officer', 'chief product officer'], ['SVP Product', 'SVP product']];
+      decision = [['CEO', 'CEO'], ['Founder', 'founder'], ['COO', 'COO']];
+      peer = [['Director of Product', 'director product'], ['Head of Product', 'head of product'], ['Group Product Manager', 'group product manager']];
+    } else if (lvl >= 4) {
+      manager = [['Director of Product', 'director product'], ['Senior Director', 'senior director product'], ['VP Product', 'VP product'], ['Head of Product', 'head of product']];
+      decision = [['Chief Product Officer', 'chief product officer'], ['SVP Product', 'SVP product'], ['CEO or founder', 'founder']];
+      peer = [['Principal PM', 'principal product manager'], ['Staff PM', 'staff product manager'], ['Group PM', 'group product manager'], ['Senior PM', 'senior product manager']];
+    } else {
+      manager = [['Group Product Manager', 'group product manager'], ['Head of Product', 'head of product'], ['Director of Product', 'director product'], ['Product Lead', 'product lead']];
+      decision = [['VP Product', 'VP product'], ['Chief Product Officer', 'chief product officer'], ['CEO or founder', 'founder']];
+      peer = [['Senior PM', 'senior product manager'], ['Product Manager', 'product manager'], ['Lead PM', 'lead product manager']];
+    }
+    if (e.family === 'cro' || e.family === 'growth') manager.unshift(['Head of Growth', 'head of growth']);
+    const withArea = (pairs) => (area ? [[pairs[0][0] + ', ' + area, pairs[0][1] + ' ' + area]].concat(pairs) : pairs).map(([l, k]) => L(l, k));
+
+    tiers.push({
+      key: 'manager', label: 'Likely hiring manager', start: !tiers.length,
+      why: 'For a ' + e.seniority + '-level role the manager is usually one or two levels up in product' + (area ? ', ideally the one who owns ' + area : '') + '.',
+      ask: 'Lead with one proof point that matches the role and ask a specific question. Do not ask for a referral in the first message.',
+      links: withArea(manager),
+    });
+    tiers.push({
+      key: 'decision', label: 'Decision maker',
+      why: 'Signs off the hire. In a company of under about 100 people this is often also the hiring manager; in a large one, go here only after the level below.',
+      ask: 'Keep it to three lines. The goal is to be forwarded to the right person, not a conversation.',
+      links: decision.map(([l, k]) => L(l, k)),
+    });
+    tiers.push({
+      key: 'peer', label: 'Peer who can refer you',
+      why: 'Someone doing this job or the level around it. Pick a person with at least one to two years at the company (tenure shows under Experience on their profile): they know the team and their referral carries weight.',
+      ask: 'Ask how the team works and what the role is really about. If the chat goes well, ask whether they would be comfortable referring you.',
+      links: withArea(peer),
+    });
+    const past = (profile && profile.pastEmployers) || [];
+    const warm = [{ label: 'Your 1st-degree connections', url: 'https://www.linkedin.com/search/results/people/?keywords=' + enc(company) + '&network=' + enc('["F"]') + '&origin=FACETED_SEARCH' }, { label: '2nd-degree, via someone you know', url: 'https://www.linkedin.com/search/results/people/?keywords=' + enc(company + ' product') + '&network=' + enc('["S"]') + '&origin=FACETED_SEARCH' }].concat(past.map((c) => L('Also worked at ' + c, c)));
+    tiers.push({
+      key: 'warm', label: 'People you already have a link to',
+      why: 'A reply is far more likely from someone who knows you or shares a past employer with you, whatever their title. Check these before writing to a stranger.',
+      ask: 'Ask for fifteen minutes on what it is like inside, then for an introduction to the hiring manager.',
+      links: warm,
+    });
+    tiers.push({
+      key: 'recruiter', label: 'Recruiter',
+      why: 'Runs the process and screens CVs. Useful for timing, salary band and whether the role is still open. Rarely a source of referrals.',
+      ask: 'Say you have applied or are about to, and ask one process question.',
+      links: [L('Talent acquisition', 'talent acquisition'), L('Recruiter', 'recruiter product')],
+    });
+    return { company, scoped: !!slug, area, tiers };
+  }
+
+  const api = { classifyPerson, people, LEXICON, LEX, norm, concepts, enrich, parseMoney, buildProfile, score, overall, tailor, factGuard, freshness, renderText, renderMarkdown, DEFAULT_WEIGHTS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.JR = Object.assign(root.JR || {}, api);
 })(typeof globalThis !== 'undefined' ? globalThis : this);
