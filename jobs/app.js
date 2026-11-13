@@ -214,6 +214,7 @@
         <div class="acts">
           <a class="btn" href="${h(j.url)}" target="_blank" rel="noopener noreferrer">Open posting</a>
           <button class="btn primary" data-tailor="${h(j.id)}">Tailor my CV</button>
+          <button class="btn" data-people="${h(j.id)}">Who to reach</button>
           <button class="btn quiet" data-mark="saved" data-id="${h(j.id)}" aria-pressed="${mark === 'saved'}">${mark === 'saved' ? 'Saved' : 'Save'}</button>
           <button class="btn quiet" data-mark="applied" data-id="${h(j.id)}" aria-pressed="${mark === 'applied'}">${mark === 'applied' ? 'Applied' : 'Mark applied'}</button>
           <button class="btn quiet" data-mark="hidden" data-id="${h(j.id)}" aria-pressed="${mark === 'hidden'}">${mark === 'hidden' ? 'Hidden' : 'Hide'}</button>
@@ -247,6 +248,7 @@
       ${ENV.trackerSheet ? `<button class="btn" data-act="track">Add to my tracker sheet</button>` : ''}</div>
     ${S.sheet.msg ? `<div class="note ${S.sheet.msgKind || ''}">${h(S.sheet.msg)}</div>` : ''}
     ${t ? tailorBlock(j, t) : ''}
+    ${peopleBlock(j)}
     <section><h2>Why it ranks ${j.o} / 100 overall</h2><div class="card"><div class="bars num">${bars.map(([l, v, txt]) => `<span>${l}</span><span class="bar"><i style="width:${v == null ? 0 : v}%"></i></span><span class="muted">${h(txt)}</span>`).join('')}</div>
       ${s.knockouts.length ? `<div class="chips">${s.knockouts.map((k) => `<span class="chip ${k.severity === 'hard' ? 'bad' : ''}">${h(k.text)}</span>`).join('')}</div>` : ''}</div></section>
     <section><h2>What the posting states</h2><div class="card"><dl class="kv">
@@ -263,6 +265,27 @@
       <div><span class="label">Asked for, not in your CV</span><div class="chips" style="margin-top:6px">${s.missing.slice(0, 16).map((m) => `<span class="chip gap">${h(m.label)}</span>`).join('') || '<span class="muted small">Nothing missing</span>'}</div></div>
     </div></section>
     <section><h2>Posting text</h2><div class="card"><div class="desc">${e.hasDescription ? h(j.description) : 'This source gave only a short summary. Open the posting for the full text; fit is estimated from the title.'}</div></div></section>`;
+  }
+
+  function peopleBlock(j) {
+    const p = JR.people(j, S.profile);
+    const sh = S.sheet;
+    const verdict = sh.who ? JR.classifyPerson(sh.who, j.e.level) : null;
+    const tone = { manager: 'ok', decision: 'ok', peer: 'ok', recruiter: 'warn', other: 'warn', unknown: 'warn' };
+    return `<section id="people"><h2>Who to reach at ${h(p.company || 'this company')}</h2>
+      <p class="small muted">${p.scoped ? 'Each link opens that group inside ' + h(p.company) + ' on LinkedIn.' : 'This role came from the employer\'s own careers feed, so the links search all of LinkedIn for the company name.'} You need to be logged in to LinkedIn; it then shows the actual people and how you are connected to them. Nothing is sent for you.</p>
+      ${p.tiers.map((t, i) => `<div class="card tier">
+        <div class="tierhead"><span class="step num">${i + 1}</span><h3>${h(t.label)}</h3>${t.start ? '<span class="chip badge">Start here</span>' : ''}</div>
+        <p class="small">${h(t.why)}</p>
+        ${t.person ? `<div class="person"><a href="${h(t.person.url)}" target="_blank" rel="noopener noreferrer"><b>${h(t.person.name)}</b></a>${t.person.role ? ' · ' + h(t.person.role) : ''}${t.person.cls ? ` <span class="chip">${h(t.person.cls)}</span>` : ''}</div>` : ''}
+        ${t.links.length ? `<div class="chips">${t.links.map((l) => `<a class="btn small" href="${h(l.url)}" target="_blank" rel="noopener noreferrer">${h(l.label)}</a>`).join('')}</div>` : ''}
+        <p class="small muted"><b>How to open:</b> ${h(t.ask)}</p>
+      </div>`).join('')}
+      <div class="card">
+        <h3>Found someone? Check where they sit</h3>
+        <div class="row"><input class="field" id="who" style="flex:1 1 240px" placeholder="Paste their job title, e.g. Director of Product, Growth" value="${h(sh.who || '')}" aria-label="Job title to classify"><button class="btn" data-act="classify">Classify</button></div>
+        ${verdict ? `<div class="note ${tone[verdict.tier]}">For this ${h(j.e.seniority)}-level role: <b>${h(verdict.label)}</b>.${verdict.tier === 'peer' ? ' Check they have been at the company one to two years before asking for a referral.' : verdict.tier === 'recruiter' ? ' Good for process and timing, not for a referral.' : verdict.tier === 'other' ? ' Unlikely to influence this hire; useful only if you know them.' : ''}</div>` : ''}
+      </div></section>`;
   }
 
   function tailorBlock(j, t) {
@@ -393,13 +416,14 @@
 
   /* ---------- events ---------- */
   document.addEventListener('click', async (ev) => {
-    const t = ev.target.closest('[data-act],[data-open],[data-tailor],[data-mark],[data-mode],[data-tog],[data-show]');
+    const t = ev.target.closest('[data-act],[data-open],[data-tailor],[data-people],[data-mark],[data-mode],[data-tog],[data-show]');
     if (ev.target.id === 'sheet') { S.sheet = null; return renderSheet(); }
     if (!t) return;
     const d = t.dataset;
     const cur = S.sheet && S.sheet.type === 'job' ? S.jobs.find((x) => x.id === S.sheet.id) : null;
     if (d.open) { S.sheet = { type: 'job', id: d.open }; return renderSheet(); }
     if (d.tailor) { S.sheet = { type: 'job', id: d.tailor, tailor: true }; return renderSheet(); }
+    if (d.people) { S.sheet = { type: 'job', id: d.people }; renderSheet(); const el = $('#people'); if (el) el.scrollIntoView(); return; }
     if (d.mark) { S.marks[d.id] = S.marks[d.id] === d.mark ? undefined : d.mark; if (!S.marks[d.id]) delete S.marks[d.id]; store.set('marks', S.marks); badges(); return render(); }
     if (d.mode) { const i = S.f.modes.indexOf(d.mode); if (i >= 0) S.f.modes.splice(i, 1); else S.f.modes.push(d.mode); S.limit = 40; return render(); }
     if (d.tog) { S.f[d.tog] = !S.f[d.tog]; S.limit = 40; return render(); }
@@ -419,6 +443,7 @@
         return;
       }
       case 'dlcv': { const tl = JR.tailor(cur, S.profile); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([tl.markdown], { type: 'text/markdown' })); a.download = 'CV - ' + cur.company.replace(/[^\w -]/g, '') + '.md'; a.click(); return; }
+      case 'classify': S.sheet.who = $('#who').value.trim(); return renderSheet();
       case 'polish': return polish(cur);
       case 'unpolish': S.sheet.polished = null; S.sheet.guard = null; return renderSheet();
       case 'savedrive': return saveDrive(cur);
@@ -461,7 +486,10 @@
     clearTimeout(qTimer);
     qTimer = setTimeout(() => { render(); const q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 220);
   });
-  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && S.sheet) { S.sheet = null; renderSheet(); } });
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && S.sheet) { S.sheet = null; renderSheet(); }
+    if (ev.key === 'Enter' && ev.target.id === 'who') { S.sheet.who = ev.target.value.trim(); renderSheet(); }
+  });
 
   /* ---------- boot ---------- */
   async function boot() {
