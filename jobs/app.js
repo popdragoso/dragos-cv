@@ -149,8 +149,9 @@
       <span><b>${srcOk}</b> of ${d.sources.length} sources answered</span>
       ${blocked ? `<span><b>${blocked}</b> need a language you do not list</span>` : ''}` : `<span><span class="dot none"></span>No scan has run yet</span>`}
     </div>
+    ${d && d.jobs.length && d.note ? `<div class="note warn">${h(d.note)}</div>` : ''}
     ${d && d.jobs.length ? `
-    <section class="picks" aria-label="Top picks">
+    <section class="picks n${S.picks.length}" aria-label="Top picks">
       ${S.picks.map(([name, j, val, hint]) => `<button class="pick" data-open="${h(j.id)}" title="${h(hint)}"><span class="label">${h(name)}</span><span class="v num">${h(val(j))}</span><span class="t">${h(j.title)}</span><span class="small muted">${h(j.company)}</span></button>`).join('')}
     </section>
     <section class="controls">
