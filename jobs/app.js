@@ -40,6 +40,7 @@
         if ((j.description || '').length > (prev.description || '').length) { prev.description = j.description; delete prev.e; }
         if (j.postedAt && (!prev.postedAt || j.postedAt > prev.postedAt)) prev.postedAt = j.postedAt;
         if (!prev.salaryText && j.salaryText) { prev.salaryText = j.salaryText; delete prev.e; }
+        if (j.workMode && j.source !== 'LinkedIn' && prev.source === 'LinkedIn') { prev.workMode = j.workMode; delete prev.e; } // the employer's own feed knows best
         continue;
       }
       seen.set(k, Object.assign({ sourcesAll: [j.source] }, j));
@@ -338,7 +339,7 @@
       const out = (r.text || '').trim();
       if (!out) return say('Claude returned nothing. The rule-based version is unchanged.', 'warn');
       S.sheet.polished = out;
-      S.sheet.guard = JR.factGuard(S.profile.text + ' ' + JSON.stringify(S.profile.cv || {}), out);
+      S.sheet.guard = JR.factGuard(S.profile.text + ' ' + JSON.stringify(S.profile.cv || {}) + ' ' + t.text, out);
       say('');
     } catch (e) { say(e && e.code === 'not_granted' ? 'You declined Claude for this page, so the rule-based version stays.' : 'Claude could not reword it (' + errText(e) + '). The rule-based version is unchanged.', 'warn'); }
   }

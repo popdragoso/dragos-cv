@@ -21,7 +21,7 @@
   const C = (id, label, w, group, aliases) => ({ id, label, w, group, aliases });
   const LEXICON = [
     C('experimentation', 'Experimentation', 3, 'growth', ['experimentation', 'experiments?', 'a/b test(?:ing|s)?', 'ab test(?:ing|s)?', 'split test(?:ing|s)?', 'multivariate', 'test and learn', 'test-and-learn', 'hypothesis[- ]driven', 'hypothes[ie]s']),
-    C('cro', 'Conversion rate optimization', 3, 'growth', ['conversion rate optimi[sz]ation', 'cro', 'conversion optimi[sz]ation', 'conversion rates?', 'conversions?', 'optimi[sz]ation']),
+    C('cro', 'Conversion rate optimization', 3, 'growth', ['conversion rate optimi[sz]ation', 'cro', 'conversion optimi[sz]ation', 'conversion rates?', 'conversions?', 'ux optimi[sz]ation', 'optimi[sz]ation (?:strategy|program|roadmap)']),
     C('growth', 'Growth', 3, 'growth', ['growth', 'product-led growth', 'plg', 'growth loops?']),
     C('funnel', 'Funnel analysis', 2, 'growth', ['funnels?', 'funnel analysis', 'drop-off']),
     C('acquisition', 'Acquisition', 2, 'growth', ['acquisition', 'user acquisition', 'top of funnel', 'new leads', 'lead generation', 'leads']),
@@ -30,7 +30,7 @@
     C('engagement', 'Engagement', 2, 'growth', ['engagement', 'active users']),
     C('monetization', 'Monetization', 3, 'growth', ['moneti[sz]ation', 'pricing', 'paywall', 'pay-per-click', 'pay-per-lead', 'ppc', 'ppl', 'subscriptions?']),
     C('revenue', 'Revenue', 2, 'growth', ['revenue', 'arr', 'mrr', 'gmv', 'incremental revenue']),
-    C('checkout', 'Checkout and payments', 1, 'growth', ['checkout', 'payments?']),
+    C('checkout', 'Checkout', 1, 'growth', ['checkout']),
     C('landing', 'Landing pages', 1, 'growth', ['landing pages?']),
     C('seo', 'SEO', 1, 'growth', ['seo', 'organic search']),
     C('crm', 'CRM and lifecycle', 1, 'growth', ['crm', 'lifecycle', 'martech', 'push notifications']),
@@ -49,44 +49,56 @@
     C('strategy', 'Product strategy', 3, 'craft', ['product strategy', 'strategy', 'strategic']),
     C('roadmap', 'Roadmap', 3, 'craft', ['roadmaps?', 'roadmapping']),
     C('vision', 'Product vision', 2, 'craft', ['vision']),
-    C('discovery', 'Product discovery', 2, 'craft', ['discovery', 'customer interviews?', 'user interviews?', 'vendor interviews?', 'user research', 'customer research', 'research']),
+    C('discovery', 'Product discovery', 2, 'craft', ['discovery', 'customer interviews?', 'user interviews?', 'vendor interviews?', 'user research', 'customer research']),
     C('prioritization', 'Prioritization', 2, 'craft', ['prioriti[sz]ation', 'prioriti[sz]e', 'prioriti[sz]ing', 'trade-offs?', 'tradeoffs?']),
     C('metrics', 'Success metrics', 3, 'craft', ['metrics?', 'kpis?', 'okrs?', 'success metrics', 'north star']),
-    C('data', 'Data-driven decisions', 3, 'craft', ['data-driven', 'data driven', 'data-informed', 'data', 'analytics', 'analytical', 'insights?']),
+    C('data', 'Data-driven decisions', 3, 'craft', ['data-driven', 'data driven', 'data-informed', 'analytics', 'analytical', 'insights?', 'quantitative']),
     C('sql', 'SQL', 1, 'craft', ['sql', 'bigquery', 'looker', 'tableau']),
     C('stats', 'Statistics', 2, 'craft', ['statistics', 'statistical', 'significance', 'statistical significance']),
     C('ux', 'UX', 2, 'craft', ['ux', 'user experience', 'usability', 'design thinking', 'ux research']),
     C('delivery', 'End-to-end delivery', 2, 'craft', ['end-to-end', 'end to end', 'delivery', 'shipped', 'shipping', 'launch(?:es|ed)?', 'go-to-market', 'gtm', 'execution']),
     C('agile', 'Agile', 1, 'craft', ['agile', 'scrum', 'sprints?', 'kanban', 'jira']),
     C('qa', 'Quality assurance', 1, 'craft', ['qa', 'quality assurance', 'regression']),
-    C('technical', 'Technical fluency', 2, 'craft', ['technical', 'apis?', 'codebase', 'code review', 'engineering']),
+    C('technical', 'Technical fluency', 2, 'craft', ['technical (?:background|fluency|depth|acumen|understanding|relationship)', 'technically', 'codebase', 'code review', 'production changes']),
     C('platform', 'Platform', 2, 'craft', ['platform', 'self-serve', 'self-service']),
-    C('mobile', 'Mobile', 1, 'craft', ['mobile', 'ios', 'android', 'apps?']),
+    C('mobile', 'Mobile', 1, 'craft', ['mobile', 'ios', 'android']),
     C('tracking', 'Event tracking', 1, 'craft', ['event tracking', 'tracking', 'instrumentation', 'cohorts?', 'amplitude', 'mixpanel', 'ga4', 'google analytics']),
     C('exptools', 'Experimentation tooling', 1, 'craft', ['optimizely', 'launchdarkly', 'kameleoon', 'vwo', 'statsig', 'eppo', 'growthbook', 'feature flags?']),
     C('uxtools', 'Behaviour analytics tools', 1, 'craft', ['hotjar', 'fullstory', 'contentsquare', 'session recordings?', 'heatmaps?']),
 
     C('stakeholders', 'Stakeholder management', 3, 'people', ['stakeholders?', 'stakeholder management']),
     C('crossfunctional', 'Cross-functional leadership', 3, 'people', ['cross-functional', 'cross functional', 'engineering, design', 'engineers and designers', 'without direct reports']),
-    C('leadership', 'Leadership', 2, 'people', ['leadership', 'lead(?:ing)?', 'led', 'influence', 'influencing']),
+    C('leadership', 'Leadership', 2, 'people', ['leadership', 'influence', 'influencing', 'without direct reports', 'without authority']),
     C('execs', 'Executive communication', 2, 'people', ['executives?', 'c-level', 'c-suite', 'vp', 'svp', 'cmo', 'leadership team', 'senior leadership', 'co-founder']),
     C('communication', 'Communication', 2, 'people', ['communication', 'communicator', 'present(?:ed|ing|ations?)?', 'storytelling']),
-    C('ownership', 'Ownership', 2, 'people', ['ownership', 'owned', 'own', 'autonomy', 'autonomous']),
+    C('ownership', 'Ownership', 2, 'people', ['ownership', 'owned', 'autonomy', 'autonomous']),
     C('mentoring', 'Coaching and mentoring', 1, 'people', ['mentor(?:ing|ed)?', 'coach(?:ing|ed)?', 'taught', 'teaching']),
-    C('vendors', 'Vendor management', 1, 'people', ['vendor management', 'vendors?', 'procurement', 'partners?', 'partnerships?']),
+    C('vendors', 'Vendor management', 1, 'people', ['vendor management', 'vendor relationship', 'procurement', 'partnerships?']),
     C('culture', 'Culture change', 1, 'people', ['culture', 'change management', 'risk-averse']),
 
     C('marketplace', 'Marketplace', 2, 'domain', ['marketplaces?', 'two-sided', 'supply and demand']),
     C('b2b', 'B2B SaaS', 2, 'domain', ['b2b', 'saas', 'enterprise']),
     C('b2c', 'Consumer', 1, 'domain', ['b2c', 'consumer', 'd2c']),
     C('ecommerce', 'E-commerce', 2, 'domain', ['e-commerce', 'ecommerce', 'retail', 'online sales']),
-    C('fintech', 'Fintech', 1, 'domain', ['fintech', 'banking', 'lending', 'insurance']),
+    C('fintech', 'Fintech', 2, 'domain', ['fintech', 'banking', 'lending', 'loans?', 'credit', 'neobank', 'wealth', 'trading', 'insurtech']),
     C('edtech', 'EdTech', 1, 'domain', ['edtech', 'education', 'learning platform']),
-    C('gaming', 'Gaming', 1, 'domain', ['gaming', 'games?', 'live ops', 'liveops', 'free-to-play']),
-    C('health', 'Healthtech', 1, 'domain', ['healthtech', 'healthcare', 'health']),
-    C('travel', 'Travel', 1, 'domain', ['travel', 'hospitality', 'booking']),
+    C('gaming', 'Gaming', 2, 'domain', ['gaming', 'games?', 'live ops', 'liveops', 'free-to-play']),
+    C('health', 'Healthtech', 2, 'domain', ['healthtech', 'healthcare', 'clinical', 'patients?', 'medical', 'pharma']),
+    C('travel', 'Travel', 1, 'domain', ['travel', 'hospitality', 'hotels?', 'airlines?']),
     C('adtech', 'Advertising', 1, 'domain', ['advertising', 'adtech', 'ads']),
     C('content', 'Content products', 1, 'domain', ['content', 'creative', 'social platforms?', 'social media']),
+    C('payments', 'Payments and billing', 2, 'domain', ['payments?', 'billing', 'invoicing', 'ledger', 'card issuing', 'psp', 'acquiring']),
+    C('crypto', 'Crypto and web3', 3, 'domain', ['crypto', 'blockchain', 'stablecoins?', 'web3', 'defi', 'tokens?', 'wallets?']),
+    C('devtools', 'Developer and infrastructure products', 3, 'domain', ['observability', 'o11y', 'kubernetes', 'cloud infrastructure', 'infrastructure', 'developer tools?', 'developer experience', 'developers', 'open source', 'open-source', 'databases?', 'sdks?', 'apis?', 'devops', 'ci/cd', 'cloud-native', 'distributed systems']),
+    C('security', 'Security, risk and compliance', 3, 'domain', ['security', 'cybersecurity', 'identity', 'fraud', 'compliance', 'regulatory', 'kyc', 'aml', 'trust (?:and|&) safety', 'privacy']),
+    C('hardware', 'Hardware and IoT', 3, 'domain', ['hardware', 'iot', 'telematics', 'automotive', 'vehicles?', 'fleet', 'devices?', 'firmware', 'robotics', 'embedded']),
+    C('dataplatform', 'Data platforms', 2, 'domain', ['data platform', 'data engineering', 'data pipelines?', 'data warehouse', 'etl', 'data infrastructure', 'data governance', 'data products?']),
+    C('logistics', 'Logistics and supply chain', 2, 'domain', ['logistics', 'supply chain', 'fulfil?lment', 'warehouse', 'last[- ]mile', 'delivery network', 'shipping']),
+    C('hrtech', 'HR and payroll', 2, 'domain', ['payroll', 'hr tech', 'hris', 'human resources', 'recruiting', 'talent acquisition', 'workforce']),
+    C('proptech', 'Real estate', 2, 'domain', ['real estate', 'proptech', 'property']),
+    C('telecom', 'Telecom', 2, 'domain', ['telecom', 'telco', 'connectivity', '5g']),
+    C('energy', 'Energy', 2, 'domain', ['energy', 'utilities', 'renewables?', 'solar']),
+    C('erp', 'ERP and back office', 2, 'domain', ['erp', 'accounting', 'procure-to-pay', 'back[- ]office', 'treasury', 'tax']),
     C('global', 'International scope', 1, 'domain', ['international', 'global', 'multi-market', 'localization', 'several countries']),
   ];
   for (const c of LEXICON) {
@@ -220,6 +232,7 @@
 
     // work mode: explicit source flag > title/location > description wording
     let mode = job.workMode || null;
+    if (/100% remote|fully remote|full remote|remote[- ]first|100% remoto/.test(title + ' ' + loc)) mode = 'remote';
     const hybridRe = /hybrid|hibrido|days? (per|a|each) week (in|at|from) (the|our) office|days? in (the|our) office|office days|dias (a la semana )?en (la )?oficina/;
     const remoteStrong = /fully remote|100% remote|remote[- ]first|remote within|remote in (spain|europe|emea|the eu)|remote \(|work from anywhere in|teletrabajo 100|100% teletrabajo|100% remoto|full remote|fully distributed|distributed team|remote position|remote role|this is a remote/;
     const onsiteRe = /on-?site|in-?office|presencial|office[- ]based|5 days (a|per) week in/;
@@ -242,10 +255,15 @@
     e.remoteScope = null;
     if (mode === 'remote') {
       const g = geo + ' ' + desc.slice(0, 2500);
-      if (/spain|espana|barcelona|madrid/.test(geo) || /remote (within|in|from) spain|anywhere in spain|based in spain|spanish (employment )?contract/.test(g)) e.remoteScope = 'Spain';
-      else if (/europe|emea|\beu\b|european|cet|utc ?\+ ?[012]\b/.test(g)) e.remoteScope = 'Europe';
-      else if (/worldwide|anywhere|global|any country/.test(g)) e.remoteScope = 'Worldwide';
-      else if (/united states|\busa?\b|us only|canada|latam|latin america|apac|india|australia|united kingdom|\buk\b|brazil|mexico/.test(geo)) e.remoteScope = 'Other region';
+      const elsewhere = /united states|\busa?\b|u\.s\.|america|canada|latam|apac|asia|india|australia|united kingdom|\buk\b|britain|england|london|ireland|dublin|germany|berlin|france|paris|netherlands|amsterdam|portugal|lisbon|italy|poland|ukraine|romania|bulgaria|serbia|turkey|israel|brazil|mexico|argentina|colombia|philippines|singapore|japan|china|africa|nigeria|kenya|egypt|dubai|uae|new york|san francisco|california|texas|toronto|sweden|denmark|norway|finland|switzerland|austria|belgium|czech|hungary|greece|estonia|lithuania|latvia|cyprus|malta|pakistan|vietnam|indonesia/;
+      const wide = /europe|emea|\beu\b|european|worldwide|anywhere|global/;
+      if (/spain|espana|barcelona|madrid|valencia|malaga/.test(geo)) e.remoteScope = 'Spain';
+      else if (elsewhere.test(loc) && !wide.test(loc)) e.remoteScope = 'Other region';
+      else if (/europe|emea|\beu\b|european/.test(loc)) e.remoteScope = 'Europe';
+      else if (/worldwide|anywhere|global/.test(loc)) e.remoteScope = /us only|usa only|north america only|must be (based|located) in the (us|united states)|authorized to work in the (us|united states)|us[- ]based/.test(desc) ? 'Other region' : 'Worldwide';
+      else if (/remote (within|in|from) spain|anywhere in spain|based in spain|spanish (employment )?contract/.test(g)) e.remoteScope = 'Spain';
+      else if (/europe|emea|\beu\b|european|cet\b|utc ?\+ ?[012]\b/.test(g)) e.remoteScope = 'Europe';
+      else if (/us only|usa only|united states|north america/.test(g)) e.remoteScope = 'Other region';
       else e.remoteScope = 'Unspecified';
     }
     e.eligible = e.inSpain || (mode === 'remote' && ['Spain', 'Europe', 'Worldwide', 'Unspecified'].includes(e.remoteScope));
@@ -308,11 +326,12 @@
     e.yearsRequired = yrs.length ? Math.max(...yrs.slice(0, 4)) : null;
 
     const isPM = /product (manager|management|lead|owner|director)|head of product|\bpm\b|chief product|vp,? (of )?product|product growth|growth product|group product|responsable de producto/.test(title);
-    const isCRO = /\bcro\b|conversion|experimentation|optimi[sz]ation|a\/b test/.test(title);
+    const isCRO = /\bcro\b|conversion rate|conversion optimi|experimentation|(website|ux|digital|web) optimi[sz]ation|a\/b test/.test(title);
     const isGrowth = /growth/.test(title);
-    const off = /product marketing|marketing manager|project manager|program manager|programme manager|product design|designer|engineer|developer|analyst|data scientist|sales|account (manager|executive)|customer success|recruiter|production manager|product specialist|product operations|category manager|brand manager|content manager|community manager|supply chain|quality manager|compliance|legal|finance manager/.test(title);
+    const off = /data director|director of (growth|marketing|data)|product marketing|marketing manager|project manager|program manager|programme manager|product design|designer|engineer|developer|analyst|data scientist|sales|account (manager|executive)|customer success|recruiter|production manager|product specialist|product operations|category manager|brand manager|content manager|community manager|supply chain|quality manager|compliance|legal|finance manager/.test(title);
     e.family = off && !/product manager/.test(title.replace(/product marketing manager/, '')) ? 'other' : isPM ? (/owner/.test(title) ? 'owner' : 'pm') : isCRO ? 'cro' : isGrowth ? 'growth' : 'other';
     if (/technical product manager|platform product manager|data product manager|hardware/.test(title)) e.techPM = true;
+    e.adjacent = e.family !== 'pm' && e.family !== 'owner' && /consultant|specialist|executive|analyst|affiliate|referral|operations|marketing|strategy|sales|partnerships?|community|hacker|seo|paid|crm/.test(title);
 
     e.concepts = concepts(job.title + '. ' + job.title + '. ' + (job.description || ''));
     e.titleConcepts = concepts(job.title);
@@ -353,7 +372,7 @@
   const levelFit = (jobLevel, myLevel) => {
     const d = jobLevel - myLevel;
     if (d === 0) return 1;
-    if (d > 0) return d <= 0.5 ? 0.95 : d <= 1 ? 0.8 : d <= 2 ? 0.6 : 0.4;
+    if (d > 0) return d <= 0.5 ? 0.95 : d <= 1 ? 0.75 : d <= 2 ? 0.5 : 0.2;
     return d >= -1 ? 0.5 : d >= -2 ? 0.15 : 0.05;
   };
 
@@ -415,12 +434,20 @@
     let role = { pm: 0.72, cro: 0.9, growth: 0.6, owner: 0.5, other: 0.12 }[e.family];
     if (e.family !== 'other') role = Math.min(1, role + 0.14 * titleHits);
     if (e.techPM && !pf.has('platform')) role *= 0.8;
-    const focusJob = e.focus.length ? e.focus.filter((id) => pf.has(id)).length / e.focus.length : 0.4;
+    if (e.adjacent) role *= 0.55;
+    // How much of what makes this posting specific does the CV actually have?
+    const SPECIAL = { growth: 1, ai: 1, domain: 1 };
+    let spTot = 0, spGot = 0;
+    for (const m of cov.matched) if (SPECIAL[LEX[m.id].group]) { spTot += m.weight; spGot += m.weight * (pf.has(m.id) ? 1 : 0.6); }
+    for (const m of cov.missing) if (SPECIAL[LEX[m.id].group]) spTot += m.weight;
+    const special = spTot > 2 ? spGot / spTot : 0.45;
+    const foreignTitle = Object.keys(e.titleConcepts).some((id) => LEX[id].group === 'domain' && LEX[id].w >= 2 && !profile.concepts[id]);
+    if (foreignTitle) role *= 0.7;
     const lvl = levelFit(e.level, profile.level);
     const yrs = !e.yearsRequired ? 0.85 : profile.years >= e.yearsRequired ? 1 : clamp(1 - (e.yearsRequired - profile.years) * 0.2, 0.2, 1);
+    const covPart = e.hasDescription ? Math.pow(cov.ratio, 1.6) : 0.4;
 
-    let fit = 100 * (0.42 * (e.hasDescription ? cov.ratio : 0.5) + 0.22 * role + 0.14 * lvl + 0.14 * focusJob + 0.08 * yrs);
-    // spread the middle so the scale reads like people expect a "match %" to read
+    let fit = 100 * (0.26 * covPart + 0.3 * (e.hasDescription ? special : 0.45) + 0.22 * role + 0.16 * lvl + 0.06 * yrs);
     fit = clamp(fit);
     if (hard) fit *= 0.62;
     if (e.family === 'other') fit = Math.min(fit, 25);

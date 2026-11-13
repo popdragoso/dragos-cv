@@ -21,7 +21,7 @@ export function text(html) {
   return decode(s).replace(/[ \t ]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 const iso = (d) => { if (d == null || d === '') return null; const t = typeof d === 'number' ? (d < 1e11 ? d * 1000 : d) : Date.parse(d); return Number.isFinite(t) ? new Date(t).toISOString() : null; };
-const TITLE_OK = /product (manager|management|lead|owner|director)|head of product|\bpm\b|growth|\bcro\b|conversion|experimentation|optimi[sz]ation|responsable de producto|chief product|vp,? (of )?product/i;
+const TITLE_OK = /product (manager|management|lead|owner|director)|head of product|\bpm\b|growth|\bcro\b|conversion rate|conversion optimi|experimentation|responsable de producto|chief product|vp,? (of )?product/i;
 const TITLE_NO = /product marketing|marketing manager|project manager|program manager|designer|engineer|developer|analyst|scientist|account |sales|customer success|recruit|intern\b|production|category manager|brand|community|supply chain|compliance|legal|finance|accountant|operations manager|seo specialist|copywriter|hacker/i;
 const titleOk = (t) => TITLE_OK.test(t) && (!TITLE_NO.test(t) || /product manager/i.test(String(t).replace(/product marketing manager/gi, '')));
 const GEO_OK = /barcelona|spain|españa|espana|madrid|remote|remoto|anywhere|europe|emea|\beu\b|worldwide|global|catalonia|cataluña|hybrid/i;
