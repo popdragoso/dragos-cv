@@ -115,6 +115,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent) }
 .cvout { white-space: pre-wrap; font: 13.5px/1.55 var(--font-body); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; overflow-wrap: anywhere; max-height: 520px; overflow-y: auto; user-select: text }
 .delta { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline }
 .delta .big { font-family: var(--font-display); font-size: 26px; font-weight: 600 }
+.people { gap: 0; padding: 4px 16px }
+.prow { display: flex; flex-direction: column; gap: 5px; padding: 12px 0; border-bottom: 1px solid var(--line); min-width: 0 }
+.prow:last-of-type { border-bottom: 0 }
+.pmain { overflow-wrap: anywhere }
+.chip.know { background: var(--good-soft); color: var(--good); font-weight: 600 }
+.note.tip { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: var(--accent-soft); color: var(--fg) }
 .tier { gap: 8px }
 .tierhead { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center }
 .step { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 600; font-size: 13px; flex: none }

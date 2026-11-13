@@ -16,10 +16,11 @@ Live page: `https://popdragoso.github.io/dragos-cv/jobs/` (not linked from the C
   Six top picks are always called out: best overall, highest fit, newest strong match, best paid, most flexible, best benefits.
 - **Tailors the CV** to one posting: re-orders and re-angles existing bullets and mirrors the posting's wording
   for skills the CV already shows. It never adds a fact. Missing keywords are listed as "only add if true".
-- **Shows who to reach** at each employer: likely hiring manager, decision maker, peers who can refer, people you
-  already have a link to, recruiters. Each group is a LinkedIn search scoped to that company; LinkedIn, with you
-  logged in, shows the people. A title classifier tells you where any person you find sits relative to the role.
-  The scan records whether a posting names its poster, but never stores a person's name in this public repository.
+- **Shows who to reach**: real people only. Drop in the Connections.csv that LinkedIn gives every member and each
+  role lists the people you already know at that employer, classified as likely hiring manager, decision maker,
+  peer, recruiter or colleague, with a filter for "I know someone there". The file is read in the browser and never
+  uploaded. Where you know nobody, the page offers LinkedIn searches scoped to the employer and nothing else.
+  No person's name is ever stored in this public repository.
 - **Works for anyone**: add a LinkedIn link and drop LinkedIn's own PDF export (or any CV) and every role is re-scored
   in the browser. Nothing is uploaded.
 
