@@ -1,0 +1,653 @@
+{
+ "checkedAt": "2026-11-13T01:16:09.850Z",
+ "boards": [
+  {
+   "slug": "abacum",
+   "ats": "ashby"
+  },
+  {
+   "slug": "adyen",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "agicap",
+   "ats": "lever"
+  },
+  {
+   "slug": "airbyte",
+   "ats": "ashby"
+  },
+  {
+   "slug": "airtable",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "alan",
+   "ats": "ashby"
+  },
+  {
+   "slug": "algolia",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "alma",
+   "ats": "ashby"
+  },
+  {
+   "slug": "amenitiz",
+   "ats": "ashby"
+  },
+  {
+   "slug": "amplitude",
+   "ats": "ashby"
+  },
+  {
+   "slug": "ankorstore",
+   "ats": "ashby"
+  },
+  {
+   "slug": "appcues",
+   "ats": "ashby"
+  },
+  {
+   "slug": "appsflyer",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "asics",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "babbel",
+   "ats": "ashby"
+  },
+  {
+   "slug": "backmarket",
+   "ats": "ashby"
+  },
+  {
+   "slug": "bazaarvoice",
+   "ats": "lever"
+  },
+  {
+   "slug": "belvo",
+   "ats": "ashby"
+  },
+  {
+   "slug": "binance",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "binance",
+   "ats": "lever"
+  },
+  {
+   "slug": "binance",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "bird",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "bitpanda",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "blablacar",
+   "ats": "lever"
+  },
+  {
+   "slug": "bloomreach",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "branch",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "braze",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "cabify",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "canonical",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "canva",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "celonis",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "cint",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "cleo",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "cohere",
+   "ats": "ashby"
+  },
+  {
+   "slug": "coinbase",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "commercetools",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "constructor",
+   "ats": "ashby"
+  },
+  {
+   "slug": "constructortech",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "contentful",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "contentsquare",
+   "ats": "lever"
+  },
+  {
+   "slug": "customerio",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "databricks",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "datadog",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "deepl",
+   "ats": "ashby"
+  },
+  {
+   "slug": "deliverect",
+   "ats": "lever"
+  },
+  {
+   "slug": "deliveroo",
+   "ats": "ashby"
+  },
+  {
+   "slug": "deliveroo",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "deliveryhero",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "docker",
+   "ats": "ashby"
+  },
+  {
+   "slug": "docplanner",
+   "ats": "ashby"
+  },
+  {
+   "slug": "doctolib",
+   "ats": "ashby"
+  },
+  {
+   "slug": "duolingo",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "ebury",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "ecovadis",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "edpuzzle",
+   "ats": "lever"
+  },
+  {
+   "slug": "elastic",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "elevenlabs",
+   "ats": "ashby"
+  },
+  {
+   "slug": "feverup",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "figma",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "fivetran",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "flix",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "freenow",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "fullstory",
+   "ats": "ashby"
+  },
+  {
+   "slug": "gainsight",
+   "ats": "ashby"
+  },
+  {
+   "slug": "gainsight",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "gameloft",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "getyourguide",
+   "ats": "ashby"
+  },
+  {
+   "slug": "gitlab",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "gocardless",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "grafanalabs",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "hellofresh",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "hibob",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "hightouch",
+   "ats": "ashby"
+  },
+  {
+   "slug": "holidu",
+   "ats": "ashby"
+  },
+  {
+   "slug": "hopper",
+   "ats": "ashby"
+  },
+  {
+   "slug": "intercom",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "iterable",
+   "ats": "ashby"
+  },
+  {
+   "slug": "jetbrains",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "jobandtalent",
+   "ats": "lever"
+  },
+  {
+   "slug": "joko",
+   "ats": "ashby"
+  },
+  {
+   "slug": "klaviyo",
+   "ats": "ashby"
+  },
+  {
+   "slug": "klaviyo",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "kwalee",
+   "ats": "lever_eu"
+  },
+  {
+   "slug": "launchdarkly",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "ledger",
+   "ats": "ashby"
+  },
+  {
+   "slug": "lodgify",
+   "ats": "lever"
+  },
+  {
+   "slug": "logrocket",
+   "ats": "lever"
+  },
+  {
+   "slug": "lokalise",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "lovable",
+   "ats": "ashby"
+  },
+  {
+   "slug": "lovable",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "make",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "malt",
+   "ats": "lever"
+  },
+  {
+   "slug": "mirakl",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "miro",
+   "ats": "ashby"
+  },
+  {
+   "slug": "mixpanel",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "mollie",
+   "ats": "ashby"
+  },
+  {
+   "slug": "mongodb",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "monzo",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "n26",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "n8n",
+   "ats": "ashby"
+  },
+  {
+   "slug": "newrelic",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "newrelic",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "notion",
+   "ats": "ashby"
+  },
+  {
+   "slug": "olx",
+   "ats": "lever_eu"
+  },
+  {
+   "slug": "omio",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "optimizely",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "oura",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "outfit7",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "oyster",
+   "ats": "ashby"
+  },
+  {
+   "slug": "paddle",
+   "ats": "ashby"
+  },
+  {
+   "slug": "payoneer",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "pendo",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "pennylane",
+   "ats": "ashby"
+  },
+  {
+   "slug": "perk",
+   "ats": "ashby"
+  },
+  {
+   "slug": "platformsh",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "pleo",
+   "ats": "ashby"
+  },
+  {
+   "slug": "preply",
+   "ats": "ashby"
+  },
+  {
+   "slug": "primer",
+   "ats": "ashby"
+  },
+  {
+   "slug": "proton",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "qonto",
+   "ats": "ashby"
+  },
+  {
+   "slug": "raisin",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "remote",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "riotgames",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "rover",
+   "ats": "lever"
+  },
+  {
+   "slug": "scopely",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "seranking",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "snowflake",
+   "ats": "ashby"
+  },
+  {
+   "slug": "snyk",
+   "ats": "ashby"
+  },
+  {
+   "slug": "sorare",
+   "ats": "ashby"
+  },
+  {
+   "slug": "spotify",
+   "ats": "lever"
+  },
+  {
+   "slug": "staffbase",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "stripe",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "sumup",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "superside",
+   "ats": "lever"
+  },
+  {
+   "slug": "swan",
+   "ats": "ashby"
+  },
+  {
+   "slug": "swile",
+   "ats": "lever"
+  },
+  {
+   "slug": "synthesia",
+   "ats": "ashby"
+  },
+  {
+   "slug": "sysdig",
+   "ats": "lever"
+  },
+  {
+   "slug": "teladochealth",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "thefork",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "theknotworldwide",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "tide",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "tinybird",
+   "ats": "lever"
+  },
+  {
+   "slug": "toptal",
+   "ats": "lever"
+  },
+  {
+   "slug": "tourlane",
+   "ats": "ashby"
+  },
+  {
+   "slug": "trainline",
+   "ats": "ashby"
+  },
+  {
+   "slug": "trivago",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "truelayer",
+   "ats": "ashby"
+  },
+  {
+   "slug": "truelayer",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "trustpilot",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "twilio",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "typeform",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "veriff",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "voodoo",
+   "ats": "ashby"
+  },
+  {
+   "slug": "wallapop",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "wise",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "wise",
+   "ats": "smartrecruiters"
+  },
+  {
+   "slug": "wolt",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "wrike",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "yext",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "yotpo",
+   "ats": "greenhouse"
+  },
+  {
+   "slug": "zapier",
+   "ats": "ashby"
+  }
+ ]
+}
