@@ -67,6 +67,8 @@
     badges();
   }
   function relevant(j) { return j.e.eligible && j.e.family !== 'other'; }
+  // A US dollar band on a role based in Spain or Europe is usually the US salary band, not what the role pays here.
+  function localPay(j) { const c = j.e.salary && j.e.salary.currency; return c === 'EUR' || c === 'GBP' || c === 'CHF' || (c === 'USD' && j.e.remoteScope === 'Worldwide'); }
   function badges() {
     for (const j of S.jobs) j.badges = [];
     const pool = S.jobs.filter((j) => relevant(j) && !j.s.hardKnockout && S.marks[j.id] !== 'hidden');
@@ -77,7 +79,7 @@
       ['Best overall', top(pool, (j) => j.o), (j) => j.o + ' / 100', 'Fit, remote, freshness, pay, flexibility and benefits, weighted your way'],
       ['Highest fit', top(pool, (j) => j.s.fit), (j) => j.s.fit + '% match', 'Closest to your CV'],
       ['Newest strong match', top(base.filter((j) => j.s.days != null), (j) => -j.s.days * 1000 + j.s.fit), (j) => ago(j.s.days), 'Posted most recently among good fits'],
-      ['Best paid', top(base.filter((j) => j.s.payRef), (j) => j.s.payRef), (j) => payText(j.e.salary, true), 'Highest disclosed pay among good fits'],
+      ['Best paid', top(base.filter((j) => j.s.payRef && localPay(j)), (j) => j.s.payRef), (j) => payText(j.e.salary, true), 'Highest disclosed pay among good fits'],
       ['Most flexible', top(base, (j) => j.s.sub.mode * 2 + j.s.sub.flex + j.s.fit / 100), (j) => modeLabel(j.e), 'Remote first, then hybrid, then extra flexibility'],
       ['Best benefits', top(base.filter((j) => j.e.benefitScore > 0), (j) => j.e.benefitScore * 100 + j.s.fit), (j) => j.e.benefits.length + ' benefits listed', 'Most benefits stated in the posting'],
     ].filter((p) => p[1]);
@@ -218,9 +220,9 @@
         <div class="meta"><span><b>${h(j.company)}</b></span><span>${h(j.location || 'Location not given')}</span><span class="num">${h(ago(s.days))}</span><span>via ${h(j.sourcesAll.join(', '))}</span><span class="num">Overall ${j.o}</span></div>
         <div class="chips">
           <span class="chip ${e.workMode}">${h(modeLabel(e))}</span>
-          <span class="chip ${e.salary ? 'pay' : ''} num">${h(payText(e.salary, true))}</span>
+          <span class="chip ${e.salary ? 'pay' : ''} num"${e.salary && !localPay(j) ? ' title="Quoted in US dollars, probably the US pay band"' : ''}>${h(payText(e.salary, true))}${e.salary && !localPay(j) ? ' (US band)' : ''}</span>
           ${j.who.length ? `<span class="chip know">${h(knowText(j.who))}</span>` : ''}
-          ${s.knockouts.filter((k) => k.severity !== 'info').map((k) => `<span class="chip ${k.severity === 'hard' ? 'bad' : ''}">${h(k.text)}</span>`).join('')}
+          ${s.knockouts.filter((k) => k.severity !== 'info').map((k) => `<span class="chip ${k.severity === 'hard' ? 'bad' : ''}"${k.quote ? ` title="${h(k.quote)}"` : ''}>${h(k.text)}</span>`).join('')}
           ${e.flex.map((x) => `<span class="chip">${h(x.label)}</span>`).join('')}
           ${ben.map((b) => `<span class="chip">${h(b.label)}</span>`).join('')}${e.benefits.length > ben.length ? `<span class="chip">+${e.benefits.length - ben.length} more</span>` : ''}
         </div>
@@ -264,7 +266,8 @@
     ${t ? tailorBlock(j, t) : ''}
     ${peopleBlock(j)}
     <section><h2>Why it ranks ${j.o} / 100 overall</h2><div class="card"><div class="bars num">${bars.map(([l, v, txt]) => `<span>${l}</span><span class="bar"><i style="width:${v == null ? 0 : v}%"></i></span><span class="muted">${h(txt)}</span>`).join('')}</div>
-      ${s.knockouts.length ? `<div class="chips">${s.knockouts.map((k) => `<span class="chip ${k.severity === 'hard' ? 'bad' : ''}">${h(k.text)}</span>`).join('')}</div>` : ''}</div></section>
+      ${s.knockouts.length ? `<div class="chips">${s.knockouts.map((k) => `<span class="chip ${k.severity === 'hard' ? 'bad' : ''}">${h(k.text)}</span>`).join('')}</div>` : ''}
+      ${s.knockouts.filter((k) => k.quote).map((k) => `<p class="small muted">${h(k.text)}, from the posting: "${h(k.quote)}"</p>`).join('')}</div></section>
     <section><h2>What the posting states</h2><div class="card"><dl class="kv">
       <dt>Work mode</dt><dd>${h(modeLabel(e))}</dd>
       <dt>Pay</dt><dd class="num">${h(payText(e.salary))}${e.salary ? ` <span class="muted">· quoted as "${h(e.salary.quote)}"</span>` : ''}${e.salary && S.profile.salaryFloor ? ((e.salary.eurMax || e.salary.eurMin) >= S.profile.salaryFloor ? ' · reaches your floor' : ' · below your floor') : ''}</dd>
