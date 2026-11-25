@@ -67,7 +67,7 @@ function slugGuesses(job, known) {
   const tk = JR.companyTokens(job.company);
   if (tk.length) { out.add(tk.join('')); out.add(tk.join('-')); out.add(tk[0]); }
   const raw = JR.norm(job.company).replace(/[^a-z0-9.]+/g, '');
-  if (raw) { out.add(raw); out.add(raw.replace(/\./g, '')); }
+  if (raw) { out.add(raw); out.add(raw.replace(/\./g, '')); if (!raw.includes('.')) out.add(raw + '.com'); }
   if (job.liCompany) { const s = job.liCompany.toLowerCase(); for (const v of [s, s.replace(/-(app|group|inc|hq|io|com|global|tech)$/, '')]) { out.add(v); out.add(v.replace(/-/g, '')); } }
   // the board link itself, when the scan found the role on the employer's feed
   const m = String(job.url).match(/(?:greenhouse\.io|lever\.co|ashbyhq\.com|workable\.com)\/([^/?#]+)/);
@@ -99,9 +99,9 @@ export async function verify(job, known) {
     if (hits.length) break; // first slug that holds the role wins
   }
   if (!hits.length) return null;
-  const local = (x) => (/barcelona|spain|espa/i.test(x.location) ? 2 : /remote|europe|emea/i.test(x.location) ? 1 : 0);
+  const local = (x) => (/barcelona|spain|espa/i.test(x.location) ? 2 : /europe|emea|\beu\b|anywhere|worldwide|^remote$|^\s*$/i.test(x.location) ? 1 : 0);
   hits.sort((a, b) => local(b) - local(a));
-  return hits[0];
+  return { ...hits[0], openToSpain: local(hits[0]) > 0 };
 }
 
 /* ---------- run ---------- */
@@ -146,6 +146,7 @@ async function main() {
     if (!v.posted && v.ats.startsWith('lever')) { const d = await getJSON(v.url.replace(/^https:\/\/jobs\.(eu\.)?lever\.co\//, (m, eu) => `https://api.${eu || ''}lever.co/v0/postings/`)); v.posted = d.json?.createdAt; }
     const posted = v.posted ? Date.parse(v.posted) : j.postedAt ? Date.parse(j.postedAt) : NaN;
     const age = Number.isFinite(posted) ? Math.floor((NOW - posted) / 864e5) : null;
+    if (!v.openToSpain) return drop(j, `Employer's board lists it only in ${v.location || 'other locations'}`);
     if (age != null && age > MAX_AGE) return drop(j, `Posted ${age} days ago on the employer's board`);
     if (/on-?site/i.test(v.mode || '')) return drop(j, 'On-site per the employer\'s board');
     if (isSeen(j.company, v.title, v.url) || out.some((o) => cleanLink(o.link) === cleanLink(v.url))) return;
@@ -154,7 +155,7 @@ async function main() {
     if (pay && (pay.eurMax || pay.eurMin) < MIN_PAY && !(pay.eurMin && !pay.eurMax)) return drop(j, 'Pay shown below €' + MIN_PAY / 1000 + 'K');
     const report = (j.description || '').match(/\breport(?:s|ing)?\s+(?:directly\s+)?(?:in)?to\s+(?:the\s+|our\s+|a\s+)?([A-Z][A-Za-z&,'’ /-]{3,70}?)(?=[.;\n(]|\s+(?:and|who|based|in|on|at|within)\b)/);
     out.push({
-      company: j.company, title: v.title, link: v.url, ats: ATS_NAME[v.ats], boardLocation: v.location, linkedin: j.source === 'LinkedIn' ? j.url : null,
+      company: j.company, title: v.title.replace(/\s+[-–—]\s+[-–—]\s+/g, ' - ').replace(/\s{2,}/g, ' ').trim(), link: v.url, ats: ATS_NAME[v.ats], boardLocation: v.location, linkedin: j.source === 'LinkedIn' ? j.url : null,
       workMode: e.workMode, remoteScope: e.remoteScope, officeDays: e.officeDays, inBarcelona: e.inBarcelona,
       salary: pay ? { quote: pay.quote, eurMin: pay.eurMin, eurMax: pay.eurMax, currency: pay.currency } : null,
       postedDaysAgo: age, fit: s.fit, overall: JR.overall(s.sub), coverage: s.coverage,
