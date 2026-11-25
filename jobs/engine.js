@@ -98,6 +98,7 @@
     C('proptech', 'Real estate', 2, 'domain', ['real estate', 'proptech', 'property']),
     C('telecom', 'Telecom', 2, 'domain', ['telecom', 'telco', 'connectivity', '5g']),
     C('energy', 'Energy', 2, 'domain', ['energy', 'utilities', 'renewables?', 'solar']),
+    C('bizsys', 'Internal business systems', 3, 'domain', ['field systems', 'sales systems', 'go-to-market (?:tools|systems)', 'business systems', 'gtm systems', 'revenue systems', 'crm platform owner']),
     C('erp', 'ERP and back office', 2, 'domain', ['erp', 'accounting', 'procure-to-pay', 'back[- ]office', 'treasury', 'tax']),
     C('global', 'International scope', 1, 'domain', ['international', 'global', 'multi-market', 'localization', 'several countries']),
   ];
@@ -158,9 +159,23 @@
     ['unlimited', 'Unlimited time off', 20, /unlimited (pto|holidays?|vacations?|time off|paid time off)|flexible (pto|time off|vacation)/],
     ['parttime', 'Part-time possible', 8, /part[- ]time (possible|option)|reduced hours/],
   ];
-  const LANGS = { spanish: /spanish|espanol|castellano/, french: /french|francais|frances/, german: /german|deutsch|aleman/, catalan: /catalan|catala/, italian: /italian|italiano/, portuguese: /portuguese|portugues/, dutch: /dutch|nederlands/, english: /english|ingles/ };
+  // Every language a posting might require. A language the candidate does not list is treated as not spoken.
+  const LANGS = {
+    english: /english|ingles/, spanish: /spanish|espanol|castellano/, catalan: /catalan|catala/, french: /french|francais|frances/, german: /german|deutsch|aleman/,
+    italian: /italian|italiano/, portuguese: /portuguese|portugues/, dutch: /dutch|nederlands|flemish/, russian: /russian|ruso/, ukrainian: /ukrainian/,
+    polish: /polish/, czech: /czech/, slovak: /slovak/, hungarian: /hungarian/, romanian: /romanian|rumano/, bulgarian: /bulgarian/, serbian: /serbian/, croatian: /croatian/,
+    greek: /greek/, turkish: /turkish/, arabic: /arabic/, hebrew: /hebrew/, hindi: /hindi/, chinese: /mandarin|chinese|cantonese/, japanese: /japanese/, korean: /korean/,
+    swedish: /swedish/, norwegian: /norwegian/, danish: /danish/, finnish: /finnish/, vietnamese: /vietnamese/, thai: /thai/, indonesian: /indonesian|bahasa/,
+  };
+  // A language word counts only when the words around it are about speaking it: "the Spanish market" or "a German seed round" is not a requirement.
+  const LANG_CONTEXT = /\b(languages?|fluen\w*|speak\w*|spoken|written|native|mother tongue|proficien\w*|bilingual|[abc][12]\b|level|idiomas?|nivel|required|must|mandatory|imprescindible|is a plus|nice to have|skills?)\b/;
+  const NOT_A_LANGUAGE = /^[\s-]*(markets?|customers?|clients?|users?|companies|company|smes?|culture|engineering|startups?|business(es)?|offices?|subsidiar\w*|entit\w*|law|legal|regulat\w*|tax\w*|government|public sector|territor\w*|citizens?|nationals?|residents?|banks?|retail\w*|economy|ecosystem|founders?|investors?|seed|headquarters|hq|team(s)? (in|based)|region|federation|republic|cuisine|food)\b/;
+  // A remote role tied to the US, whatever the job board's region label says.
+  const US_ONLY = /remote,?\s*-?\s*(usa?|canada|united states)\b|(united states|canada|usa)\s*-\s*remote|remote within (canada|the us|the u\.s\.|the united states|canada or (the )?united states)|us pay range|based on u\.s\. location|us employees \(any location\)|canada-based employees|candidates (located|based) in [a-z ,]+canada|open to candidates in the (us|united states|canada)|\bus only|usa only|north america only|(headquarters|hq|location)\s*:?\s*-?\s*remote,?\s*-?\s*(usa|us|united states)\b|remote,? (usa|u\.s\.)\b|must be (based|located|residing) in the (us|u\.s\.|united states)|(authori[sz]ed|eligible) to work in the (us|u\.s\.|united states)|us[- ]based|u\.s\. (citizens|residents)|within the (us|u\.s\.|united states)\b|(est|pst|cst|et|pt) (time ?zones?|hours)|us time ?zones?/;
+  const LANG_PLUS = /\b(plus|bonus|nice to have|advantage|desirable|valorable|valued|preferred|beneficial|asset|would be great|ideal(?:ly)?|not required|is not (a )?must)\b/;
+  const LANG_REQ = /\b(fluen\w*|native|proficien\w*|required|must|mandatory|imprescindible|essential|nativo|fluido|bilingual|b1|b2|c1|c2|advanced|excellent|strong|command of|good command|business[- ]level|alto|avanzado|speaker|speaking|spoken|written)\b/;
   const ES_WORDS = /\b(nuestro|nuestra|buscamos|experiencia|empresa|equipo|trabajo|ofrecemos|requisitos|conocimientos|para|como|tambien|seras|puesto|funciones)\b/g;
-  const FR_WORDS = /\b(nous|notre|vous|votre|recherchons|experience|equipe|poste|missions|profil|avec|pour|dans|sein)\b/g;
+  const FR_WORDS = /\b(nous|notre|vous|votre|recherchons|equipe|poste|missions|profil|avec|pour|dans|sein)\b/g;
   const DE_WORDS = /\b(wir|unser|unsere|und|fur|mit|deine|aufgaben|erfahrung|suchen|bieten|bei|das|die|der)\b/g;
 
   const SENIORITY = [
@@ -258,12 +273,14 @@
       const elsewhere = /united states|\busa?\b|u\.s\.|america|canada|latam|apac|asia|india|australia|united kingdom|\buk\b|britain|england|london|ireland|dublin|germany|berlin|france|paris|netherlands|amsterdam|portugal|lisbon|italy|poland|ukraine|romania|bulgaria|serbia|turkey|israel|brazil|mexico|argentina|colombia|philippines|singapore|japan|china|africa|nigeria|kenya|egypt|dubai|uae|new york|san francisco|california|texas|toronto|sweden|denmark|norway|finland|switzerland|austria|belgium|czech|hungary|greece|estonia|lithuania|latvia|cyprus|malta|pakistan|vietnam|indonesia/;
       const wide = /europe|emea|\beu\b|european|worldwide|anywhere|global/;
       if (/spain|espana|barcelona|madrid|valencia|malaga/.test(geo)) e.remoteScope = 'Spain';
+      // job-board labels like "Anywhere in the World" are often wrong; the posting's own words win
+      else if (/worldwide|anywhere|global/.test(loc) && /remote (across|within|in) (the )?(european union|eu|europe|emea)|eu-based|based in (the )?(eu|europe)/.test(desc)) e.remoteScope = 'Europe';
       else if (elsewhere.test(loc) && !wide.test(loc)) e.remoteScope = 'Other region';
       else if (/europe|emea|\beu\b|european/.test(loc)) e.remoteScope = 'Europe';
-      else if (/worldwide|anywhere|global/.test(loc)) e.remoteScope = /us only|usa only|north america only|must be (based|located) in the (us|united states)|authorized to work in the (us|united states)|us[- ]based/.test(desc) ? 'Other region' : 'Worldwide';
+      else if (/worldwide|anywhere|global/.test(loc)) e.remoteScope = US_ONLY.test(desc) || (/headquarters:[^.]{0,120}(united states|canada|\b[a-z]+, (ca|ny|ma|md|wa|tx|or|il|co|ga|fl)\b)/.test(desc) && !/europe|emea|\beu\b|spain|united kingdom|\buk\b|germany|france|portugal|netherlands|poland|ireland/.test(desc)) ? 'Other region' : 'Worldwide';
       else if (/remote (within|in|from) spain|anywhere in spain|based in spain|spanish (employment )?contract/.test(g)) e.remoteScope = 'Spain';
       else if (/europe|emea|\beu\b|european|cet\b|utc ?\+ ?[012]\b/.test(g)) e.remoteScope = 'Europe';
-      else if (/us only|usa only|united states|north america/.test(g)) e.remoteScope = 'Other region';
+      else if (US_ONLY.test(g) || /united states|north america/.test(g)) e.remoteScope = 'Other region';
       else e.remoteScope = 'Unspecified';
     }
     e.eligible = e.inSpain || (mode === 'remote' && ['Spain', 'Europe', 'Worldwide', 'Unspecified'].includes(e.remoteScope));
@@ -293,21 +310,32 @@
 
     // languages
     e.languages = [];
-    const sentences = desc.split(/(?<=[.!?;:\n•·])\s+|\s-\s/);
     for (const [lang, re] of Object.entries(LANGS)) {
-      let level = null;
-      for (const s of sentences) {
-        if (!re.test(s)) continue;
-        if (/\b(plus|bonus|nice to have|advantage|desirable|valorable|valued|preferred|beneficial|asset|would be great|ideal(?:ly)?|not required|is not (a )?must)\b/.test(s)) level = level || 'plus';
-        else if (/\b(fluent|fluency|native|proficien|required|must|mandatory|imprescindible|nativo|bilingual|c1|c2|advanced|excellent|professional|business[- ]level|alto|avanzado|speaker|speaking)\b/.test(s)) level = 'required';
+      let level = null, quote = '';
+      const word = new RegExp('(?<![a-z])(?:' + re.source + ')(?![a-z])', 'g');
+      let m;
+      while ((m = word.exec(desc))) {
+        // look at the words around this mention, not the whole paragraph, so "fluent English; Spanish is a plus" reads right
+        // the clause holding this mention: from the previous full stop, semicolon or bullet to the next one
+        const before = desc.slice(Math.max(0, m.index - 90), m.index), after = desc.slice(m.index, m.index + m[0].length + 90);
+        const cut = Math.max(before.lastIndexOf('. '), before.lastIndexOf(';'), before.lastIndexOf('•'), before.lastIndexOf('\n'), before.lastIndexOf('!'), before.lastIndexOf('?'));
+        const end = after.slice(m[0].length).search(/\.\s|;|•|\n|!|\?/);
+        const near = before.slice(cut + 1) + (end < 0 ? after : after.slice(0, m[0].length + end));
+        if (NOT_A_LANGUAGE.test(desc.slice(m.index + m[0].length, m.index + m[0].length + 22))) continue; // "Spanish market", "German engineering"
+        if (!LANG_CONTEXT.test(near) && !LANG_PLUS.test(near) && !LANG_REQ.test(near)) continue;
+        if (/\b(lessons?|classes|courses?|clases|tutoring|language learning|learn(ing)? (a )?new language)\b/.test(near)) continue; // a perk, not a requirement
+        const was = level;
+        if (LANG_PLUS.test(near)) level = level || 'plus';
+        else if (LANG_REQ.test(near)) level = 'required';
         else level = level || 'mentioned';
+        if (level !== was) quote = near.trim();
       }
-      if (new RegExp('\\b' + lang + '[- ]speaking|\\(' + lang + '\\)|' + lang + ' fluent|fluent ' + lang).test(title)) level = 'required';
-      if (level) e.languages.push({ lang, level });
+      if (new RegExp('(?<![a-z])(?:' + re.source + ')(?:[- ]speak\\w*|[- ]fluent|[- ]native|\\))|fluent (?:' + re.source + ')|native (?:' + re.source + ')').test(title)) { level = 'required'; quote = 'Job title: ' + job.title; }
+      if (level) e.languages.push({ lang, level, quote: quote.slice(0, 200) });
     }
     const nw = Math.max(1, desc.split(' ').length);
     const share = (re) => (desc.match(re) || []).length / nw;
-    e.postingLanguage = share(ES_WORDS) > 0.035 ? 'spanish' : share(FR_WORDS) > 0.05 ? 'french' : share(DE_WORDS) > 0.07 ? 'german' : 'english';
+    e.postingLanguage = nw < 60 ? 'english' : share(ES_WORDS) > 0.035 ? 'spanish' : share(FR_WORDS) > 0.05 ? 'french' : share(DE_WORDS) > 0.07 ? 'german' : 'english';
     if (e.postingLanguage !== 'english' && !e.languages.some((l) => l.lang === e.postingLanguage && l.level === 'required')) {
       e.languages = e.languages.filter((l) => l.lang !== e.postingLanguage);
       e.languages.push({ lang: e.postingLanguage, level: 'posting' });
@@ -399,7 +427,7 @@
       if (have === 'fluent' || have === 'working') continue;
       if (l.lang === 'english') continue;
       const name = l.lang[0].toUpperCase() + l.lang.slice(1);
-      if (l.level === 'required') out.push({ lang: l.lang, severity: 'hard', text: name + ' required' + (have ? ' (yours: ' + have + ')' : '') });
+      if (l.level === 'required') out.push({ lang: l.lang, severity: 'hard', text: name + ' required' + (have ? ' (yours: ' + have + ')' : ''), quote: l.quote });
       else if (l.level === 'posting') out.push({ lang: l.lang, severity: 'hard', text: 'Posting written in ' + name });
       else if (l.level === 'mentioned') out.push({ lang: l.lang, severity: 'soft', text: name + ' mentioned' });
       else out.push({ lang: l.lang, severity: 'info', text: name + ' is a plus' });

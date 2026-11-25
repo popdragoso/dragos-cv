@@ -24,6 +24,20 @@ Live page: `https://popdragoso.github.io/dragos-cv/jobs/` (not linked from the C
 - **Works for anyone**: add a LinkedIn link and drop LinkedIn's own PDF export (or any CV) and every role is re-scored
   in the browser. Nothing is uploaded.
 
+## Job leads for the tracker
+
+`node scraper/leads.mjs --seen seen.json --out leads.json` turns the day's scan into leads:
+
+- Senior, Lead, Staff or Principal PM titles; Barcelona (not on-site) or remote open to Spain.
+- Growth, experimentation, PLG, monetization or GenAI in the title, or throughout the posting when fit is at least 70.
+- Posted within 30 days on the employer's board; pay at least €100K when a range is shown; no five-day office roles.
+- Still open on the employer's own Greenhouse, Lever, Ashby or Workable board, and offered there in Spain or Europe.
+  Roles posted only by recruiters or job aggregators are dropped.
+- Roles already in the tracker (same link, or same company and title) are skipped. Referral-pipeline companies
+  come back separately as `flagged`.
+
+It writes no names. Finding a person to contact and writing the tracker rows is done by hand from public sources.
+
 ## How it runs
 
 | Part | Where | Notes |
