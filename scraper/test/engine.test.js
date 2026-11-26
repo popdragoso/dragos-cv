@@ -95,4 +95,8 @@ const ru = JR.score({ title: 'Lead Product Manager, Online Donations', company: 
 assert.ok(ru.hardKnockout, 'a required language the user does not speak must block the role');
 const ro = JR.score({ title: 'Senior Product Manager', company: 'X', location: 'Barcelona', description: 'Own growth. Romanian speaker required.' }, p);
 assert.ok(!ro.hardKnockout, 'Romanian is in the profile');
+const es = JR.score({ title: 'Senior Product Manager', company: 'X', location: 'Barcelona', description: 'Own growth and experimentation. Spanish: native or C1 level.' }, p);
+assert.ok(!es.hardKnockout && es.knockouts.some((k) => k.text === 'Spanish required (fine for you)'), 'Spanish roles stay in for this profile');
+const esOther = JR.score({ title: 'Senior Product Manager', company: 'X', location: 'Barcelona', description: 'Own growth. Spanish: native or C1 level.' }, JR.buildProfile('Jane Roe\nSenior Product Manager\n2015 - present Acme\nLanguages: English (native)\n' + 'Ran growth experiments. '.repeat(20)));
+assert.ok(esOther.hardKnockout, 'for someone who has not accepted Spanish it still blocks');
 console.log('people tests passed');
