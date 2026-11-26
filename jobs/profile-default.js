@@ -142,6 +142,8 @@
     return JR.buildProfile(text, {
       name: cv.name, headline: cv.headline, linkedin: 'https://www.linkedin.com/in/dragospopthecropm',
       years: 10, level: 3, languages: { english: 'fluent', romanian: 'fluent', spanish: 'basic' },
+      // Spanish is basic on the CV, but Dragos asked (26 Nov) to keep roles that require it.
+      acceptLanguages: ['spanish'],
       focus: ['experimentation', 'cro', 'growth', 'monetization', 'funnel', 'genai', 'ai', 'evals', 'marketplace', 'b2b', 'ecommerce', 'retention'],
       cv, custom: false, pastEmployers: ['Gartner', 'Capterra', 'G2', 'Festo', 'Dentsu'],
     });
