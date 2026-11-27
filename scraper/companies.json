@@ -1,9 +1,13 @@
 {
- "checkedAt": "2026-11-13T01:16:09.850Z",
+ "checkedAt": "2026-11-27T06:22:45.527Z",
  "boards": [
   {
    "slug": "abacum",
    "ats": "ashby"
+  },
+  {
+   "slug": "adjust",
+   "ats": "recruitee"
   },
   {
    "slug": "adyen",
@@ -127,7 +131,7 @@
   },
   {
    "slug": "cint",
-   "ats": "smartrecruiters"
+   "ats": "ashby"
   },
   {
    "slug": "cleo",
@@ -178,10 +182,6 @@
    "ats": "ashby"
   },
   {
-   "slug": "deliverect",
-   "ats": "lever"
-  },
-  {
    "slug": "deliveroo",
    "ats": "ashby"
   },
@@ -228,6 +228,10 @@
   {
    "slug": "elevenlabs",
    "ats": "ashby"
+  },
+  {
+   "slug": "exoticca",
+   "ats": "workable"
   },
   {
    "slug": "feverup",
@@ -294,12 +298,20 @@
    "ats": "ashby"
   },
   {
+   "slug": "holded",
+   "ats": "recruitee"
+  },
+  {
    "slug": "holidu",
    "ats": "ashby"
   },
   {
    "slug": "hopper",
    "ats": "ashby"
+  },
+  {
+   "slug": "hostaway",
+   "ats": "recruitee"
   },
   {
    "slug": "intercom",
@@ -322,8 +334,8 @@
    "ats": "ashby"
   },
   {
-   "slug": "klaviyo",
-   "ats": "ashby"
+   "slug": "kantox",
+   "ats": "workable"
   },
   {
    "slug": "klaviyo",
@@ -364,6 +376,10 @@
   {
    "slug": "make",
    "ats": "greenhouse"
+  },
+  {
+   "slug": "make",
+   "ats": "recruitee"
   },
   {
    "slug": "malt",
@@ -456,6 +472,10 @@
   {
    "slug": "perk",
    "ats": "ashby"
+  },
+  {
+   "slug": "personio",
+   "ats": "recruitee"
   },
   {
    "slug": "platformsh",
@@ -594,10 +614,6 @@
    "ats": "ashby"
   },
   {
-   "slug": "truelayer",
-   "ats": "greenhouse"
-  },
-  {
    "slug": "trustpilot",
    "ats": "greenhouse"
   },
@@ -610,8 +626,16 @@
    "ats": "greenhouse"
   },
   {
+   "slug": "veepee",
+   "ats": "lever"
+  },
+  {
    "slug": "veriff",
    "ats": "greenhouse"
+  },
+  {
+   "slug": "vestiairecollective",
+   "ats": "lever"
   },
   {
    "slug": "voodoo",
